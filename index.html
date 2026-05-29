@@ -623,7 +623,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
     <!-- Add Task -->
     <div class="add-card">
       <div class="add-main">
-        <textarea class="add-input" id="addInput" placeholder="添加新任务…（Shift+Enter 换行）" maxlength="500" rows="1" onkeydown="handleAddKey(event)" oninput="autoResizeAdd(this)"></textarea>
+        <textarea class="add-input" id="addInput" placeholder="写点什么… 按 Enter 添加，Shift+Enter 换行" maxlength="500" rows="1" onkeydown="handleAddKey(event)" oninput="autoResizeAdd(this)"></textarea>
         <button class="add-btn" onclick="doAdd()" title="添加">＋</button>
       </div>
       <div class="add-opts">
@@ -901,7 +901,7 @@ function render(){
     html+=`</div></div></div></div></div>`;
   });
 
-  if(!html)html='<div class="empty"><div class="empty-icon">'+(searchTerm?'🔍':'✦')+'</div><div>'+(searchTerm?'没有匹配的任务':'暂无任务 — 添加第一个任务开始吧')+'</div><div class="export-row"><button class="export-btn" onclick="exportData()">📤 导出数据</button><button class="export-btn" onclick="document.getElementById(\'importInput\').click()">📥 导入数据</button><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button><input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/></div></div>';
+  if(!html)html='<div class="empty"><div class="empty-icon">'+(searchTerm?'🔍':'✦')+'</div><div>'+(searchTerm?'没有匹配的任务':'咕嘎～ 还没有任务，在上方写点什么吧')+'</div>'+(searchTerm?'':'<div class="export-row"><button class="export-btn" onclick="exportData()">📤 导出</button><button class="export-btn" onclick="document.getElementById(\'importInput\').click()">📥 导入</button><input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/></div>')+'</div>';
   wrap.innerHTML=html;updatePomStats();renderCalendar();
 }
 
