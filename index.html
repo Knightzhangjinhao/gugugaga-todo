@@ -440,49 +440,118 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 
 /* ═══════════════════════════════════════════ MOBILE ═══════════════════════════════════════════ */
 @media(max-width:860px){
-  .page-body{grid-template-columns:1fr;gap:16px;padding:14px 14px 100px;}
-  .sidebar{order:0;position:static;gap:12px;}
-  .sidebar .side-card{max-width:100%;}
-  .header-inner{padding:10px 12px 8px;}
-  .header-top{flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-  .header-right{width:100%;flex-wrap:wrap;gap:8px;}
-  .header-bottom{flex-wrap:wrap;gap:6px;}
-  .prog-wrap{max-width:130px;}.ot-card{padding:6px 10px;}.ot-time{font-size:15px;}
-  .tab-bar{flex:1;min-width:fit-content;}
-  .search-wrap{margin-left:0;margin-right:auto;}
-  .search-input{width:100px;font-size:11px;}
-  .search-input:focus{width:150px;}
+  /* 全局 */
+  .page-body{grid-template-columns:1fr;gap:12px;padding:10px 0 120px;max-width:100%;}
+  .left-col{gap:12px;}
+
+  /* 头部精简 */
+  .header-inner{padding:10px 14px 8px;}
+  .header-top{gap:8px;margin-bottom:6px;}
+  .header-right{width:100%;justify-content:space-between;gap:6px;}
+  .date-block .greeting{font-size:9px;letter-spacing:.12em;}
+  .date-block .today-date{font-size:17px;}
+  .prog-wrap{max-width:100px;}.ot-card{gap:6px;padding:6px 10px;font-size:12px;}
+  .ot-time{font-size:14px;}.ot-icon{font-size:16px;}
+  .ot-edit-tip{display:none;}
+
+  /* Tab 栏缩小 */
+  .header-bottom{gap:6px;}
+  .tab{font-size:10px;padding:4px 12px;min-height:26px;}
+  .search-wrap{order:1;width:100%;margin-top:4px;margin-left:0;}
+  .search-input{width:100%;border-radius:var(--radius);}
+  .search-input:focus{width:100%;}
   .search-hint{display:none;}
-  .header-settings-row{margin-left:0;}
-  .add-opts{flex-wrap:wrap;gap:6px;padding:0 10px 10px;}
-  .add-main{padding:6px 4px 6px 12px;}.add-input{font-size:14px;}
-  .chat-panel{right:4px;left:4px;width:auto;bottom:72px;max-height:60vh;}
-  .fab{bottom:16px;right:16px;width:42px;height:42px;font-size:15px;}
-  .theme-modal-box,.weather-modal-box{width:calc(100vw - 24px);padding:18px;}
+  .header-settings-row{order:2;margin-left:0;}
+  .theme-settings-btn{font-size:10px;}
+
+  /* 日历面板隐藏 */
   #calPanel{display:none !important;}
-  .cal-page-wrap{padding:0 4px;}
-  .cal-page-cell{min-height:50px;padding:2px;}
+
+  /* 添加任务区 */
+  .add-card{border-radius:0;border-left:none;border-right:none;}
+  .add-main{padding:4px 4px 4px 14px;}.add-input{font-size:14px;}
+  .add-opts{padding:0 14px 8px;gap:4px;flex-wrap:wrap;}
+  .add-opts .opt-lbl{font-size:8px;}.add-opts .tog{font-size:10px;padding:3px 10px;min-height:22px;}
+  .task-date-input{font-size:10px;min-width:100px;}
+
+  /* 任务分组卡片 - 去圆角 */
+  .acc-group{border-radius:0;border-left:none;border-right:none;margin-bottom:8px;}
+  .acc-head-inner{padding:0 16px;height:44px;}
+  .acc-title{font-size:13px;}.acc-count{font-size:9px;}
+  .acc-content{padding:8px 12px 10px;}
+
+  /* 任务条目 */
+  .task-item{border-radius:var(--radius-sm);}
+  .task-main-row{padding:8px 8px 8px 6px;gap:6px;}
+  .task-text-row{font-size:12px;line-height:1.45;}
+  .task-meta-row{gap:4px;margin-top:2px;}
+  .task-actions{opacity:1;gap:0;}
+  .act-btn{width:22px;height:22px;font-size:11px;}
+  .badge{font-size:8px;padding:1px 5px;}
+  .task-time{font-size:8px;}.task-has-detail{font-size:8px;}
+
+  /* 本周待办 */
+  .weekly-toggle{font-size:11px;padding:4px 0;}
+
+  /* 侧边栏 - 网格布局 2 列 */
+  .sidebar{order:0;position:static;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .side-card{border-radius:var(--radius-lg);border:1px solid var(--border);}
+  .side-card-head{padding:10px 12px 8px;}
+  .side-card-head h3{font-size:12px;}
+  .side-card-body{padding:10px 12px;}
+
+  /* 天气卡片缩小 */
+  .weather-main{gap:8px;margin-bottom:6px;}
+  .weather-icon{font-size:28px;}.weather-temp{font-size:22px;}
+  .weather-details{grid-template-columns:1fr 1fr;gap:3px;}
+  .weather-detail-item{padding:5px 6px;}
+  .weather-detail-item .wdi-val{font-size:10px;}
+
+  /* 备忘录 */
+  .memo-textarea{min-height:60px;font-size:11px;}
+
+  /* 番茄钟 */
+  .pom-ring-wrap svg{width:90px;height:90px;}.pom-time{font-size:20px;}
+  .pom-btn{padding:5px 12px;font-size:10px;}
+  .pom-stats{font-size:9px;padding:5px 8px;}
+
+  /* 氛围音 */
+  .ambient-btn{width:32px;height:32px;font-size:14px;border-radius:8px;}
+  .ambient-sounds{gap:4px;margin-bottom:8px;}
+  .ambient-power{font-size:10px;padding:6px;}.ambient-volume{margin-top:6px;}
+
+  /* 企鹅 */
+  .penguin-char{bottom:70px;right:8px;}.penguin-char img{width:64px;}
+
+  /* AI 面板 */
+  .chat-panel{right:4px;left:4px;width:auto;bottom:64px;max-height:55vh;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+  .fab{bottom:14px;right:14px;width:40px;height:40px;font-size:14px;}
+
+  /* 弹窗 */
+  .modal-box,.edit-modal-box,.pom-modal-box,.weather-modal-box,.theme-modal-box{width:calc(100vw - 20px) !important;padding:18px;margin:0 10px;}
+
+  /* Toast */
+  .toast{font-size:11px;padding:8px 14px;}
+
+  /* 日历页 */
+  .cal-page-cell{min-height:44px;padding:2px;gap:0;}
   .cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:10px;}
-  .cal-page-title{font-size:18px;}
-  .weekly-toggle{font-size:11px;}
-  .acc-head-inner{padding:0 14px;height:46px;}
-  .acc-title{font-size:14px;}
-  .task-text-row{font-size:12px;line-height:1.5;}
-  .task-main-row{padding:8px 8px 8px 8px;}
-  .task-actions{opacity:1;} /* 移动端始终显示操作按钮 */
-  .date-block .today-date{font-size:18px;}
-  .cal-page-container{padding:14px 12px 80px !important;}
+  .cal-page-title{font-size:16px;}.cal-nav-btn{font-size:12px;padding:3px 8px;}
+  .cal-page-detail{padding:12px 14px;}
+  .cal-detail-date{font-size:14px;}
 }
 @media(max-width:400px){
   .header-inner{padding:8px 10px 6px;}
-  .page-body{padding:10px 8px 100px;}
+  .page-body{padding:6px 0 110px;}
+  .date-block .today-date{font-size:15px;}
+  .sidebar{gap:8px;}
+  .side-card-body{padding:8px 10px;}
+  .weather-icon{font-size:22px;}.weather-temp{font-size:18px;}
+  .weather-details{grid-template-columns:1fr;gap:2px;}
+  .penguin-char img{width:52px;}.penguin-char{bottom:58px;right:4px;}
+  .fab{bottom:10px;right:10px;width:36px;height:36px;font-size:13px;}
   .add-input{font-size:13px;}
-  .tab{font-size:10px;padding:4px 10px;min-height:26px;}
-  .penguin-char img{width:70px;}.penguin-char{bottom:60px;right:6px;}
-  .chat-panel{bottom:60px;max-height:55vh;}
-  .fab{bottom:12px;right:12px;width:38px;height:38px;font-size:14px;}
-  .ot-card{padding:5px 8px;}.ot-time{font-size:13px;}
-  .ot-icon{font-size:16px;}
+  .cal-page-cell{min-height:36px;}
 }
 </style>
 </head>
