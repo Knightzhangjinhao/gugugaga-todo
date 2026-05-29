@@ -1385,7 +1385,12 @@ function sbInit(){
 }
 async function sbPull(){
   if(!sbClient||sbSyncing)return;sbSyncing=true;
-  try{const{data,error}=await sbClient.from('todos').select('*').eq('device_key',sbDeviceKey).order('created_at',{ascending:false});if(error)throw error;
+  try{
+    // 迁移遗留数据（device_key='legacy' 的任务认领到当前设备）
+    const{data:legacy}=await sbClient.from('todos').select('*').eq('device_key','legacy').limit(100);
+    if(legacy&&legacy.length>0){for(const r of legacy){await sbClient.from('todos').update({device_key:sbDeviceKey}).eq('id',r.id);}console.log('🔄 迁移了 '+legacy.length+' 条旧任务');}
+    // 拉取当前设备任务
+    const{data,error}=await sbClient.from('todos').select('*').eq('device_key',sbDeviceKey).order('created_at',{ascending:false});if(error)throw error;
     if(data&&data.length>0){const cloudTasks=data.map(r=>({id:r.id,text:r.text,done:r.done,scope:r.scope||'today',priority:r.priority||'normal',date:r.date||today(),createdAt:new Date(r.created_at).getTime(),doneAt:r.done_at?new Date(r.done_at).getTime():null,notes:r.notes||''}));
       const merged=sbMerge(tasks,cloudTasks);if(merged.changed){tasks=merged.tasks;save();render();renderCal2();}
     }
