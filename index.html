@@ -470,9 +470,12 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   /* 添加任务区 */
   .add-card{border-radius:0;border-left:none;border-right:none;}
   .add-main{padding:4px 4px 4px 14px;}.add-input{font-size:14px;}
-  .add-opts{padding:0 14px 8px;gap:4px;flex-wrap:wrap;}
-  .add-opts .opt-lbl{font-size:8px;}.add-opts .tog{font-size:10px;padding:3px 10px;min-height:22px;}
-  .task-date-input{font-size:10px;min-width:100px;}
+  .add-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 16px 10px;}
+  .add-opts .sep{display:none;}
+  .add-opts .opt-lbl{font-size:9px;margin-right:2px;}
+  .add-opts .tog-group{flex-wrap:wrap;}
+  .add-opts .tog{font-size:11px;padding:5px 14px;min-height:30px;}
+  .task-date-input{font-size:11px;padding:5px 12px;min-height:30px;width:auto;flex:1;min-width:120px;max-width:160px;}
 
   /* 任务分组卡片 - 去圆角 */
   .acc-group{border-radius:0;border-left:none;border-right:none;margin-bottom:8px;}
@@ -551,6 +554,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   .penguin-char img{width:52px;}.penguin-char{bottom:58px;right:4px;}
   .fab{bottom:10px;right:10px;width:36px;height:36px;font-size:13px;}
   .add-input{font-size:13px;}
+  .task-date-input{min-width:0;max-width:100%;width:100%;flex:none;}
   .cal-page-cell{min-height:36px;}
 }
 </style>
