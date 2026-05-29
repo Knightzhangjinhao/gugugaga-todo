@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>每日待办</title>
+<title>咕咕嘎嘎 · 待办</title>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="咕咕嘎嘎"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#f4f3ef"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a18'/><text x='50' y='68' text-anchor='middle' font-size='60'>🐧</text></svg>"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -1428,6 +1435,7 @@ document.addEventListener('keydown',function(e){
 // ════════════════════════ INIT ════════════════════════
 try{
   load();initDarkMode();initChatResize();initPenguinDrag();initCalendar();sbInit();updateDateBlock();render();pomRenderUI();fetchWeather();
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
   if(Notification&&Notification.permission==='default')Notification.requestPermission();
   otTick=setInterval(updateOT,1000);updateOT();
   console.log('%c✅ 初始化完成 %c欢迎使用！','color:var(--primary);font-weight:bold;','');
