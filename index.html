@@ -1502,6 +1502,7 @@ function sbGetDeviceKey(){
 }
 
 function sbInit(){
+  if(typeof supabase==='undefined'){console.log('⏳ Supabase SDK loading...');return;}
   sbDeviceKey=sbGetDeviceKey();
   const defaultCfg={url:'https://jowvxjewnnnflybhtufe.supabase.co',key:'sb_publishable_MqNt3ler8IxxmZLeqhYYUQ_MypOV8XH'};
   try{const cfg=JSON.parse(localStorage.getItem(SB_STORE)||'null');if(cfg&&cfg.url){defaultCfg.url=cfg.url;defaultCfg.key=cfg.key||defaultCfg.key;}}catch(e){}
@@ -1552,14 +1553,16 @@ document.addEventListener('keydown',function(e){
 
 // ════════════════════════ INIT ════════════════════════
 try{
-  load();initDarkMode();initChatResize();initPenguinDrag();initCalendar();sbInit();updateDateBlock();render();pomRenderUI();fetchWeather();
+  load();initDarkMode();initChatResize();initPenguinDrag();initCalendar();
+  try{sbInit();}catch(e){console.log('Supabase init deferred:',e.message);}
+  updateDateBlock();render();pomRenderUI();fetchWeather();
   if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
   if(Notification&&Notification.permission==='default')Notification.requestPermission();
   otTick=setInterval(updateOT,1000);updateOT();
-  console.log('%c✅ 初始化完成 %c欢迎使用！','color:var(--primary);font-weight:bold;','');
+  console.log('%c✅ 初始化完成','color:var(--primary);font-weight:bold;');
 }catch(e){
   console.error('初始化失败:',e);
-  document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div>加载出错：'+e.message+'</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';
+  try{document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">🐧</div><div>咕嘎…加载出错了：'+e.message.slice(0,30)+'</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';}catch(_){}
 }
 </script>
 </body>
