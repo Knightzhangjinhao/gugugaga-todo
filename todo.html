@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>每日待办</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════ MUTED POSTAL · MONOCHROMATIC · 山田健二 ════════════════════════ */
+:root{
+  --bg:#f4f3ef;--card:#fafaf7;--card-warm:#f7f6f2;--ink:#1a1a18;--ink2:#595550;--ink3:#8a8580;
+  --border:#dcd9d2;--border-light:rgba(0,0,0,0.04);--primary:#1a1a18;--primary-l:#3a3a36;
+  --primary-xl:#e0ded8;--accent:#6b6560;--accent-l:#8a8480;--accent-xl:#e0dcd8;
+  --header-bg-image:none;--radius:3px;--radius-sm:3px;--radius-lg:6px;
+  --shadow:none;--shadow-h:none;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);--ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink2);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.7;letter-spacing:0.02em;font-weight:350;}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 20% 0%,rgba(0,0,0,0.015) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(0,0,0,0.01) 0%,transparent 60%);opacity:1;}
+/* ── 暗色模式 ── */
+html.dark{--bg:#141413;--card:#1c1c1a;--card-warm:#1e1e1c;--ink:#e4e2df;--ink2:#a8a49e;--ink3:#6e6a64;--border:#302e2a;--border-light:rgba(255,255,255,0.03);}
+html.dark .site-header{background:var(--bg);}
+html.dark .site-header.has-bg::before{background:linear-gradient(135deg,rgba(20,20,19,0.9),rgba(20,20,19,0.8));}
+html.dark .memo-card{background:var(--card-warm);border-color:rgba(180,160,90,.08);}
+html.dark .ot-card.urgent{background:#221a14;}
+html.dark .ot-card.warning{background:#1e1c14;}
+html.dark .weather-detail-item,html.dark .pom-stats,html.dark .task-detail-notes,html.dark .edit-textarea{background:rgba(255,255,255,0.03);}
+html.dark .ambient-btn{background:rgba(255,255,255,0.04);}
+html.dark .add-input,html.dark .add-input::placeholder{color:var(--ink);}
+html.dark .theme-upload-btn{background:rgba(255,255,255,0.03);}
+html.dark body::before{opacity:0.15;}
+html.dark .penguin-bubble{background:rgba(28,28,26,0.95);border-color:rgba(255,255,255,0.06);}
+html.dark .penguin-bubble::after{border-top-color:rgba(28,28,26,0.95);}
+/* ── 拖拽排序 ── */
+.task-item[draggable]{cursor:grab;}
+.task-item.dragging{opacity:0.35;transform:scale(0.98);}
+.task-item.drag-over{border-color:var(--primary)!important;box-shadow:0 0 0 2px rgba(45,61,79,0.12),0 4px 12px rgba(0,0,0,0.08);}
+.task-item.drag-above{border-top:2px solid var(--primary);}
+.dark-toggle{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 6px;border-radius:var(--radius-sm);transition:all .15s;line-height:1;}
+.dark-toggle:hover{background:rgba(0,0,0,0.05);}
+html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
+
+/* ── HEADER ── */
+.site-header{background:var(--bg);background-image:var(--header-bg-image);background-size:cover;background-position:center;background-repeat:no-repeat;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;}
+.site-header.has-bg::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(250,249,246,0.82),rgba(250,249,246,0.7));pointer-events:none;z-index:0;}
+.site-header.has-bg>.header-inner{position:relative;z-index:1;}
+.header-inner{max-width:1200px;margin:0 auto;padding:18px 36px 14px;}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;}
+.date-block .greeting{font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);opacity:.8;}
+.date-block .today-date{font-family:'Noto Serif SC',serif;font-size:24px;font-weight:400;letter-spacing:-.01em;line-height:1.3;color:var(--ink);margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.ot-card{background:var(--card);border-radius:var(--radius-lg);padding:11px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;flex-shrink:0;transition:all .25s var(--ease-out);border:1px solid var(--border);cursor:pointer;}
+.ot-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-h);}
+.ot-card.urgent{background:#fef9f7;border-color:rgba(184,118,90,.25);}
+.ot-card.warning{background:#fdfaf6;border-color:rgba(180,140,60,.2);}
+.ot-icon{font-size:20px;line-height:1;transition:transform .25s var(--ease-spring);}
+.ot-card:hover .ot-icon{transform:scale(1.12);}
+.ot-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);}
+.ot-time{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2;}
+.ot-hint{font-size:10px;color:var(--ink3);margin-top:1px;}
+.ot-edit-tip{font-size:9px;color:var(--ink3);opacity:.5;margin-top:1px;}
+.prog-wrap{flex:1;max-width:200px;}
+.prog-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-bottom:4px;}
+.prog-track{height:3px;background:var(--border);border-radius:100px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:100px;background:var(--primary);transition:width .6s var(--ease-out);}
+
+/* ── URGENCY ── */
+.urgency{max-width:1200px;margin:12px auto 0;padding:0 36px;display:none;}
+.urgency.show{display:block;animation:slideDown .35s var(--ease-out);}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.urgency-inner{border-radius:var(--radius-lg);padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;}
+.urgency-inner.lvl-warn{background:#fdf8ec;color:#6b4e00;border:1px solid rgba(180,140,60,.25);}
+.urgency-inner.lvl-urgent{background:#fdf0ea;color:#8a2810;border:1px solid rgba(184,118,90,.28);animation:urgentPulse 2.5s infinite;}
+@keyframes urgentPulse{0%,100%{box-shadow:0 0 0 0 rgba(184,118,90,.1);}50%{box-shadow:0 0 0 6px rgba(184,118,90,.06);}}
+
+/* ── LAYOUT ── */
+.page-body{max-width:1300px;margin:0 auto;padding:28px 28px 80px;display:grid;grid-template-columns:270px 1fr 330px;gap:22px;align-items:start;}
+@media(max-width:1150px){.page-body{grid-template-columns:1fr 300px;gap:20px;padding:24px 20px 80px;}#calPanel{display:none;}}
+@media(max-width:860px){.page-body{grid-template-columns:1fr;gap:18px;padding:18px 14px 80px;}.sidebar{order:-1;}}
+.left-col{display:flex;flex-direction:column;gap:24px;}
+
+/* ── ADD TASK ── */
+.add-card{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;transition:box-shadow .2s var(--ease-out);}
+.add-card:focus-within{box-shadow:var(--shadow-h);}
+.add-main{display:flex;align-items:stretch;gap:6px;padding:8px 6px 8px 20px;}
+.add-input{flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--ink);background:transparent;padding:8px 0;resize:none;overflow:hidden;line-height:1.5;min-height:22px;max-height:120px;}
+.add-input::placeholder{color:var(--ink3);opacity:.7;}
+.add-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);width:38px;height:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease-spring);flex-shrink:0;align-self:flex-end;}
+.add-btn:hover{background:var(--primary-l);transform:scale(1.06);}
+.add-btn:active{transform:scale(.94);}
+.add-opts{display:flex;align-items:center;gap:8px;padding:0 20px 12px;flex-wrap:wrap;}
+.opt-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);}
+.tog-group{display:flex;gap:3px;}
+.tog{font-family:inherit;font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);white-space:nowrap;min-height:26px;}
+.tog:hover{border-color:var(--primary);color:var(--primary);}
+.tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
+.tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
+.tog.on-high{background:var(--accent-xl);border-color:var(--accent);color:var(--accent);}
+.tog.on-normal{background:transparent;border-color:var(--border);color:var(--ink3);}
+.sep{width:1px;height:16px;background:var(--border);margin:0 4px;}
+.task-date-input{border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-family:inherit;font-size:11px;color:var(--ink);background:var(--card);outline:none;cursor:pointer;transition:border-color .15s;min-width:120px;}
+.task-date-input:focus{border-color:var(--primary);}
+
+/* ── TABS + SEARCH ── */
+.header-bottom{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.tab-bar{display:flex;gap:2px;background:var(--card);border-radius:var(--radius);padding:3px;box-shadow:var(--shadow);border:1px solid var(--border);width:fit-content;}
+.tab{font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:5px 18px;border-radius:var(--radius-sm);border:none;background:transparent;color:var(--ink3);cursor:pointer;transition:all .18s var(--ease-out);min-height:30px;}
+.tab.on{background:var(--primary);color:#fff;}
+.tab:not(.on):hover{background:rgba(0,0,0,0.04);color:var(--primary);}
+.search-wrap{position:relative;margin-left:auto;}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:12px;pointer-events:none;}
+.search-input{border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px 6px 30px;font-family:inherit;font-size:12px;color:var(--ink);background:var(--card);outline:none;width:140px;transition:all .2s var(--ease-out);}
+.search-input:focus{border-color:var(--primary);width:190px;}
+.search-input::placeholder{color:var(--ink3);opacity:.7;}
+.search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;display:none;padding:0;line-height:1;}
+.search-wrap.has-value .search-clear{display:block;}
+.search-wrap.has-value .search-icon{display:none;}
+.search-hint{font-size:10px;color:var(--ink3);opacity:.5;white-space:nowrap;}
+.header-settings-row{display:flex;align-items:center;gap:8px;margin-left:4px;}
+@media(max-width:600px){.search-wrap{margin-left:0;}.search-input{width:110px;}.search-input:focus{width:150px;}.search-hint{display:none;}}
+
+/* ── WEEKLY TOGGLE ── */
+.weekly-section{margin-bottom:2px;}
+.weekly-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:var(--ink2);padding:6px 0;transition:color .15s;}
+.weekly-toggle:hover{color:var(--primary);}
+.weekly-toggle-icon{font-size:10px;transition:transform .25s var(--ease-out);}
+.weekly-toggle.hidden .weekly-toggle-icon{transform:rotate(-90deg);}
+.weekly-badge{font-size:10px;font-weight:600;background:var(--accent-xl);color:var(--accent);padding:1px 7px;border-radius:100px;margin-left:4px;}
+
+/* ── ACCORDION GROUPS ── */
+.acc-group{border-radius:var(--radius-lg);overflow:hidden;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px;}
+.acc-head-inner{display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 20px;cursor:pointer;user-select:none;transition:background .15s;}
+.acc-head-inner:hover{background:rgba(0,0,0,0.015);}
+.acc-title{display:flex;align-items:center;gap:10px;font-family:'Noto Serif SC',serif;font-size:15px;font-weight:500;color:var(--ink);}
+.acc-count{font-family:'Inter',sans-serif;font-size:10px;font-weight:600;background:var(--primary-xl);color:var(--primary);padding:1px 8px;border-radius:100px;}
+.acc-count.terra{background:var(--accent-xl);color:var(--accent);}
+.acc-chevron{width:18px;height:18px;color:var(--ink3);flex-shrink:0;transition:transform .28s var(--ease-out);}
+.acc-group.open .acc-chevron{transform:rotate(180deg);}
+.acc-divider{height:1px;background:var(--border);margin:0 20px;}
+.acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease-out);}
+.acc-group.open .acc-body{grid-template-rows:1fr;}
+.acc-body-inner{overflow:hidden;}
+.acc-content{padding:10px 16px 14px;opacity:0;transition:opacity .25s var(--ease-out) .05s;}
+.acc-group.open .acc-content{opacity:1;}
+.task-list{display:flex;flex-direction:column;gap:6px;}
+
+/* ── TASK ITEM ── */
+.task-item{border-radius:var(--radius);border:1px solid var(--border);background:var(--card-warm);overflow:hidden;transition:all .18s var(--ease-out),opacity .3s var(--ease-out);}
+.task-item:hover{box-shadow:var(--shadow-h);}
+.task-item.done{opacity:.45;}
+.task-main-row{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 10px 10px;}
+.task-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:transparent;}
+.task-item.pri-high::before{background:var(--accent);border-radius:1px 0 0 1px;}
+.task-item{position:relative;}
+.chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:2px;transition:all .2s var(--ease-spring);}
+.chk:hover{border-color:var(--primary);}
+.chk.on{background:var(--primary);border-color:var(--primary);}
+.chk.on::after{content:'';display:block;width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translateY(-0.5px);}
+.task-body{flex:1;min-width:0;cursor:pointer;}
+.task-text-row{font-size:13px;line-height:1.65;color:var(--ink);word-break:break-word;white-space:pre-wrap;transition:color .2s;letter-spacing:0.005em;}
+.task-item.done .task-text-row{text-decoration:line-through;color:var(--ink3);}
+.task-meta-row{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;}
+.badge{font-size:9px;font-weight:600;padding:1px 7px;border-radius:100px;letter-spacing:.03em;}
+.badge.today{background:var(--primary-xl);color:var(--primary);}
+.badge.week{background:#ece9e2;color:var(--ink2);}
+.task-time{font-size:9px;color:var(--ink3);}
+.task-has-detail{font-size:9px;color:var(--primary);background:var(--primary-xl);padding:1px 6px;border-radius:100px;cursor:pointer;transition:transform .15s var(--ease-spring);}
+.task-has-detail:hover{transform:scale(1.06);}
+.task-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s;flex-shrink:0;padding-top:1px;}
+.task-item:hover .task-actions{opacity:1;}
+.act-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;width:26px;height:26px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;transition:all .12s var(--ease-out);}
+.act-btn:hover{background:rgba(0,0,0,0.04);color:var(--ink);}
+.act-btn.del:hover{background:rgba(184,118,90,.1);color:var(--accent);}
+
+/* ── TASK DETAIL ── */
+.task-detail-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s var(--ease-out);}
+.task-item.detail-open .task-detail-body{grid-template-rows:1fr;}
+.task-detail-inner{overflow:hidden;}
+.task-detail-content{padding:0 12px 10px 40px;opacity:0;transition:opacity .2s var(--ease-out) .04s;}
+.task-item.detail-open .task-detail-content{opacity:1;}
+.task-detail-notes{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-family:inherit;font-size:12px;color:var(--ink);background:var(--bg);outline:none;resize:vertical;min-height:60px;transition:border-color .15s;line-height:1.5;}
+.task-detail-notes:focus{border-color:var(--primary);background:var(--card);}
+.task-detail-notes::placeholder{color:var(--ink3);opacity:.6;}
+.task-detail-save{margin-top:6px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:5px 13px;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;transition:all .12s var(--ease-spring);}
+.task-detail-save:hover{background:var(--primary-l);}
+.empty{text-align:center;padding:32px 0 16px;color:var(--ink3);font-size:12px;}
+.empty-icon{font-size:24px;margin-bottom:8px;}
+.export-row{display:flex;gap:8px;justify-content:center;margin-top:16px;}
+.export-btn{font-family:inherit;font-size:10px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--ink3);cursor:pointer;transition:all .15s;}
+.export-btn:hover{border-color:var(--primary);color:var(--primary);}
+
+/* ── MODALS ── */
+.modal-overlay,.edit-modal-overlay,.pom-modal-overlay,.weather-modal-overlay,.theme-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(4px);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out);}
+.modal-overlay.show,.edit-modal-overlay.show,.pom-modal-overlay.show,.weather-modal-overlay.show,.theme-modal-overlay.show{opacity:1;pointer-events:all;}
+.modal-box,.edit-modal-box,.pom-modal-box,.weather-modal-box,.theme-modal-box{background:var(--card);border-radius:var(--radius-lg);padding:26px;border:1px solid var(--border);transform:scale(.94) translateY(12px);transition:transform .25s var(--ease-spring);}
+.modal-overlay.show .modal-box,.edit-modal-overlay.show .edit-modal-box,.pom-modal-overlay.show .pom-modal-box,.weather-modal-overlay.show .weather-modal-box,.theme-modal-overlay.show .theme-modal-box{transform:scale(1) translateY(0);}
+.modal-box{width:300px;}.edit-modal-box,.pom-modal-box{width:360px;max-width:calc(100vw - 28px);}.weather-modal-box,.theme-modal-box{width:400px;max-width:calc(100vw - 28px);}
+.modal-title,.edit-modal-title,.pom-modal-title,.weather-modal-title,.theme-modal-title{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:600;color:var(--ink);margin-bottom:18px;}
+.modal-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.modal-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);min-width:60px;}
+.time-input{flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s;}
+.time-input:focus{border-color:var(--primary);}
+.modal-btns,.edit-modal-btns,.pom-modal-btns,.weather-modal-btns{display:flex;gap:8px;margin-top:18px;}
+.modal-btn,.edit-modal-btn,.pom-modal-btn,.weather-modal-btn{flex:1;padding:10px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s var(--ease-spring);}
+.modal-btn.primary,.edit-modal-btn.primary,.pom-modal-btn.primary,.weather-modal-btn.primary{background:var(--primary);color:#fff;}
+.modal-btn.primary:hover,.edit-modal-btn.primary:hover,.pom-modal-btn.primary:hover,.weather-modal-btn.primary:hover{background:var(--primary-l);}
+.modal-btn.secondary,.edit-modal-btn.secondary,.pom-modal-btn.secondary,.weather-modal-btn.secondary{background:var(--bg);color:var(--ink2);border:1px solid var(--border);}
+.modal-btn.secondary:hover,.edit-modal-btn.secondary:hover,.pom-modal-btn.secondary:hover,.weather-modal-btn.secondary:hover{background:var(--border);}
+.edit-field{margin-bottom:14px;}
+.edit-field-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.edit-textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg);outline:none;resize:vertical;min-height:60px;transition:border-color .15s;line-height:1.5;}
+.edit-textarea:focus{border-color:var(--primary);background:var(--card);}
+.edit-tog-row{display:flex;gap:5px;}
+.edit-tog{font-family:inherit;font-size:11px;font-weight:500;padding:5px 14px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);}
+.edit-tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
+.edit-tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
+.edit-tog.on-high{background:var(--accent-xl);border-color:var(--accent);color:var(--accent);}
+.edit-tog.on-normal{background:transparent;border-color:var(--border);color:var(--ink3);}
+
+/* ── SIDEBAR ── */
+.sidebar{display:flex;flex-direction:column;gap:14px;position:sticky;top:86px;}
+.side-card{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;transition:all .2s var(--ease-out);}
+.side-card:hover{box-shadow:var(--shadow-h);}
+.side-card-head{display:flex;align-items:center;gap:8px;padding:14px 16px 12px;border-bottom:1px solid var(--border);}
+.side-card-head h3{font-family:'Noto Serif SC',serif;font-size:13px;font-weight:500;color:var(--ink);flex:1;}
+.side-card-body{padding:14px 16px;}
+
+/* Weather */
+.weather-main{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.weather-icon{font-size:36px;line-height:1;}
+.weather-temp{font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;color:var(--ink);line-height:1;}
+.weather-desc{font-size:10px;color:var(--ink3);margin-top:1px;}
+.weather-city{font-size:10px;font-weight:600;color:var(--primary);margin-top:1px;}
+.weather-details{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.weather-detail-item{background:var(--bg);border-radius:var(--radius-sm);padding:6px 8px;}
+.weather-detail-item .wdi-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);margin-bottom:1px;}
+.weather-detail-item .wdi-val{font-size:11px;font-weight:600;color:var(--ink);}
+.weather-loading{text-align:center;padding:14px;color:var(--ink3);font-size:11px;}
+.weather-city-input{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s;}
+.weather-city-input:focus{border-color:var(--primary);}
+.weather-city-hint{font-size:10px;color:var(--ink3);margin-top:5px;}
+
+/* Memo */
+.memo-card{background:#fefdfb;border:1px solid rgba(180,160,90,.2);position:relative;}
+.memo-card::before{content:'📌';position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:18px;z-index:2;}
+.memo-card .side-card-body{padding-top:18px;}
+.memo-textarea{width:100%;border:none;background:transparent;font-family:inherit;font-size:12px;color:var(--ink);resize:vertical;min-height:80px;outline:none;line-height:1.7;padding:2px 0;}
+.memo-textarea::placeholder{color:var(--ink3);opacity:.5;font-style:italic;}
+.memo-indicator{font-size:9px;color:var(--primary);opacity:0;text-align:right;margin-top:1px;transition:opacity .4s;}
+.memo-indicator.show{opacity:.6;}
+
+/* Pomodoro */
+.pom-ring-wrap{display:flex;justify-content:center;margin-bottom:10px;position:relative;}
+.pom-ring{transform:rotate(-90deg);}
+.pom-ring-bg{fill:none;stroke:var(--border);stroke-width:5;}
+.pom-ring-fill{fill:none;stroke:var(--primary);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .4s var(--ease-out),stroke .3s;}
+.pom-ring-fill.brk{stroke:var(--accent);}
+.pom-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.pom-time{font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;color:var(--ink);line-height:1;}
+.pom-phase{font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:2px;}
+.pom-controls{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
+.pom-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:7px 16px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s var(--ease-spring);}
+.pom-btn:hover{background:var(--primary-l);}
+.pom-btn:active{transform:scale(.96);}
+.pom-btn.secondary{background:var(--bg);color:var(--ink2);border:1px solid var(--border);}
+.pom-btn.secondary:hover{background:var(--border);}
+.pom-stats{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);background:var(--bg);border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:6px;}
+.pom-stats span b{color:var(--ink);font-weight:600;}
+.pom-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 3px;border-radius:3px;transition:all .15s;}
+.pom-settings-btn:hover{color:var(--primary);}
+.pom-range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.pom-range-lbl{font-size:10px;font-weight:600;color:var(--ink3);min-width:50px;text-transform:uppercase;letter-spacing:.04em;}
+.pom-range-val{font-size:11px;font-weight:600;color:var(--ink);min-width:42px;text-align:right;}
+
+/* Ambient */
+.ambient-sounds{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.ambient-btn{width:36px;height:36px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:15px;transition:all .18s var(--ease-spring);display:flex;align-items:center;justify-content:center;}
+.ambient-btn:hover{border-color:var(--primary);}
+.ambient-btn.playing{background:var(--primary);color:#fff;border-color:var(--primary);animation:ambientPulse 2s infinite;}
+@keyframes ambientPulse{0%,100%{box-shadow:0 0 0 0 rgba(45,61,79,.2);}50%{box-shadow:0 0 0 6px rgba(45,61,79,.08);}}
+.ambient-btn.custom-badge{position:relative;}
+.ambient-btn.custom-badge::after{content:'+';position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--primary);color:#fff;border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.ambient-power{width:100%;padding:8px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s var(--ease-spring);}
+.ambient-power.off{background:var(--bg);color:var(--ink3);border:1px solid var(--border);}
+.ambient-power.off:hover{background:var(--border);}
+.ambient-power.on{background:var(--primary);color:#fff;}
+.ambient-power.on:hover{background:var(--primary-l);}
+.ambient-vol-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.ambient-vol-icon{font-size:12px;color:var(--ink3);flex-shrink:0;}
+.ambient-volume{flex:1;accent-color:var(--primary);height:3px;cursor:pointer;}
+.ambient-upload-btn{background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-family:inherit;font-size:10px;color:var(--ink3);cursor:pointer;transition:all .15s;width:100%;margin-top:6px;}
+.ambient-upload-btn:hover{border-color:var(--primary);color:var(--primary);}
+
+/* ═══════════════════════════════════════════ TOAST ═══════════════════════════════════════════ */
+.toast-wrap{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:900;pointer-events:none;}
+.toast{background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-lg);font-size:12px;display:flex;align-items:center;gap:10px;transform:translateY(120px);opacity:0;transition:all .28s var(--ease-spring);pointer-events:all;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-undo{background:var(--accent);border:none;color:#fff;padding:4px 10px;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:11px;transition:all .15s;}
+.toast-undo:hover{background:var(--accent-l);}
+.toast-undo:active{transform:scale(.96);}
+
+/* Theme */
+.theme-field{margin-bottom:14px;}
+.theme-field-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;display:flex;align-items:center;gap:8px;}
+.theme-color-row{display:flex;align-items:center;gap:10px;}
+.theme-color-input{-webkit-appearance:none;appearance:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;background:transparent;}
+.theme-color-input:hover{border-color:var(--ink3);}
+.theme-color-input::-webkit-color-swatch-wrapper{padding:0;}
+.theme-color-input::-webkit-color-swatch{border-radius:50%;border:none;}
+.theme-color-hex{font-size:12px;font-weight:600;color:var(--ink2);font-family:monospace;}
+.theme-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.theme-preset{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .15s var(--ease-spring);}
+.theme-preset:hover{transform:scale(1.15);}
+.theme-preset.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink);}
+.theme-url-row{display:flex;gap:8px;align-items:center;}
+.theme-url-input{flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-family:inherit;font-size:12px;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s;}
+.theme-url-input:focus{border-color:var(--primary);}
+.theme-upload-btn{background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-family:inherit;font-size:10px;color:var(--ink3);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.theme-upload-btn:hover{border-color:var(--primary);color:var(--primary);}
+.theme-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:11px;font-weight:500;padding:3px 6px;border-radius:var(--radius-sm);transition:all .15s;display:flex;align-items:center;gap:3px;}
+.theme-settings-btn:hover{color:var(--primary);background:rgba(0,0,0,0.03);}
+
+/* ── CALENDAR PANEL ── */
+#calPanel{position:sticky;top:86px;display:flex;flex-direction:column;gap:14px;}
+.cal-card{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(0,0,0,0.05);}
+.cal-head button{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:14px;padding:2px 6px;border-radius:var(--radius-sm);transition:all .15s;}
+.cal-head button:hover{color:var(--primary);background:rgba(0,0,0,0.03);}
+.cal-month{font-family:'Noto Serif SC',serif;font-size:15px;font-weight:600;color:var(--ink);}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:6px 8px 2px;font-size:9px;font-weight:600;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:4px 8px 10px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--ink);border-radius:50%;cursor:pointer;transition:all .12s var(--ease-out);position:relative;}
+.cal-day:hover{background:rgba(0,0,0,0.05);}
+.cal-day.today{background:var(--primary);color:#fff;font-weight:700;}
+.cal-day.other-month{color:var(--ink3);opacity:.4;}
+.cal-day.has-task::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent);}
+.cal-day.today.has-task::after{background:#fff;}
+.cal-day.selected{box-shadow:0 0 0 2px var(--primary);}
+.cal-task-list{padding:6px 12px 12px;font-size:11px;max-height:120px;overflow-y:auto;}
+.cal-task-item{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;color:var(--ink2);cursor:pointer;transition:color .12s;}
+.cal-task-item:hover{color:var(--primary);}
+.cal-task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.cal-task-dot.high{background:var(--accent);}
+.cal-task-dot.normal{background:var(--primary-xl);}
+.cal-no-tasks{text-align:center;color:var(--ink3);font-size:11px;padding:8px 0;}
+html.dark .cal-card{background:rgba(30,30,34,0.4);border:1px solid rgba(255,255,255,0.06);box-shadow:0 2px 16px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.04);}
+/* ── CALENDAR PAGE 2 ── */
+.cal-page-wrap{display:flex;flex-direction:column;gap:16px;}
+.cal-page-head{display:flex;align-items:center;gap:8px;padding:0 0 8px;}
+.cal-page-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:400;color:var(--ink);letter-spacing:0.04em;}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink2);font-size:14px;padding:4px 10px;transition:all .15s;}
+.cal-nav-btn:hover{color:var(--ink);border-color:var(--ink3);}
+.cal-page-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:6px 4px;font-size:9px;font-weight:500;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.cal-page-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.cal-page-cell{background:var(--card);min-height:90px;padding:4px 6px;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.cal-page-cell:hover{background:var(--card-warm);}
+.cal-page-cell.other-month{background:var(--bg);opacity:.4;}
+.cal-page-cell.today{background:var(--primary-xl);}
+.cal-page-cell.selected{box-shadow:inset 0 0 0 2px var(--ink);}
+.cal-page-cell-num{font-size:12px;font-weight:500;color:var(--ink2);line-height:1;}
+.cal-page-cell.today .cal-page-cell-num{color:var(--ink);font-weight:600;}
+.cal-page-cell-dots{display:flex;flex-wrap:wrap;gap:2px;overflow:hidden;}
+.cal-page-cell-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.cal-page-cell-dot.high{background:var(--accent);}
+.cal-page-cell-dot.normal{background:var(--primary-xl);border:1px solid var(--primary);}
+.cal-page-cell-label{font-size:9px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;}
+.cal-page-detail{margin-top:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;}
+.cal-detail-date{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:400;color:var(--ink);margin-bottom:12px;letter-spacing:0.03em;}
+.cal-detail-tasks{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;max-height:200px;overflow-y:auto;}
+.cal-detail-task{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:12px;color:var(--ink2);border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;}
+.cal-detail-task:hover{background:var(--bg);}
+.cal-detail-task .chk{width:16px;height:16px;}
+.cal-detail-add{display:flex;flex-direction:column;gap:4px;}
+@media(max-width:860px){.cal-page-cell{min-height:60px;padding:2px 4px;}.cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:10px;}}
+
+/* ── PENGUIN CHARACTER ── */
+.penguin-char{position:fixed;bottom:90px;right:20px;z-index:590;cursor:pointer;user-select:none;transition:transform .3s var(--ease-spring);animation:penguinFloat 3.5s ease-in-out infinite;}
+.penguin-char:hover{transform:scale(1.12);}
+.penguin-char:active{transform:scale(.9);}
+.penguin-char img{width:110px;height:auto;display:block;image-rendering:auto;}
+.penguin-bubble{position:absolute;top:-36px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--ink);padding:5px 10px;border-radius:12px;font-size:11px;white-space:nowrap;box-shadow:var(--shadow);border:1px solid var(--border);opacity:0;transition:opacity .25s;pointer-events:none;}
+.penguin-bubble::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--card);}
+.penguin-char:hover .penguin-bubble,.penguin-char.thinking .penguin-bubble,.penguin-char.talking .penguin-bubble{opacity:1;}
+.penguin-char.thinking img{animation:penguinWobble .5s ease-in-out infinite;}
+.penguin-char.talking img{animation:penguinBounce .6s var(--ease-spring) infinite;}
+@keyframes penguinFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes penguinWobble{0%,100%{transform:rotate(0);}33%{transform:rotate(-5deg);}66%{transform:rotate(5deg);}}
+@keyframes penguinBounce{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+@media(max-width:600px){.penguin-char{bottom:72px;right:10px;}.penguin-char img{width:80px;}}
+
+/* ═══════════════════════════════════════════ AI CHAT ═══════════════════════════════════════════ */
+.fab{position:fixed;bottom:28px;right:28px;z-index:600;width:50px;height:50px;background:var(--primary);border:none;border-radius:50%;box-shadow:0 2px 12px rgba(45,61,79,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s var(--ease-spring);color:#fff;}
+.fab:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(45,61,79,.35);}
+.fab.active{background:var(--accent);}
+.chat-panel{position:fixed;bottom:92px;right:28px;width:400px;height:440px;min-width:280px;min-height:260px;max-width:92vw;max-height:88vh;background:var(--card);border-radius:var(--radius-lg);box-shadow:0 8px 36px rgba(0,0,0,.12);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:599;transform:scale(.88) translateY(18px) translateX(18px);opacity:0;pointer-events:none;transition:all .25s var(--ease-spring);}
+.chat-panel.show{transform:scale(1) translateY(0) translateX(0);opacity:1;pointer-events:all;}
+.chat-head{padding:12px 14px;background:var(--primary);display:flex;align-items:center;gap:8px;cursor:move;user-select:none;}
+.chat-head-title{flex:1;font-family:'Noto Serif SC',serif;font-size:14px;font-weight:500;color:#fff;}
+.chat-head-sub{font-size:9px;color:rgba(255,255,255,.65);}
+.chat-close{background:rgba(255,255,255,.15);border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.chat-close:hover{background:rgba(255,255,255,.25);}
+.chat-resize-handle{position:absolute;top:0;left:0;width:18px;height:18px;cursor:nwse-resize;z-index:10;}
+.chat-resize-handle::after{content:'';position:absolute;top:2px;left:2px;width:8px;height:8px;border-top:2px solid rgba(255,255,255,.35);border-left:2px solid rgba(255,255,255,.35);}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;}
+.chat-msg{max-width:90%;padding:10px 13px;border-radius:var(--radius);font-size:12px;line-height:1.6;animation:msgIn .2s var(--ease-out);overflow-wrap:break-word;word-break:break-word;}
+@keyframes msgIn{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:translateY(0);}}
+.chat-msg.ai{background:var(--bg);color:var(--ink);align-self:flex-start;border-bottom-left-radius:3px;}
+.chat-msg.ai h4{font-size:13px;font-weight:600;margin:0 0 4px;color:var(--primary);}
+.chat-msg.ai strong,.chat-msg.ai b{font-weight:600;}
+.chat-msg.ai ul,.chat-msg.ai ol{margin:4px 0;padding-left:18px;}
+.chat-msg.ai li{margin:2px 0;}
+.chat-msg.ai p{margin:3px 0;}
+.chat-msg.ai code{background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px;font-size:11px;font-family:monospace;}
+.chat-msg.ai pre{background:rgba(0,0,0,0.05);padding:8px 10px;border-radius:6px;font-size:11px;overflow-x:auto;margin:4px 0;white-space:pre-wrap;}
+.chat-msg.ai pre code{background:none;padding:0;}
+.chat-msg.ai hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+.chat-msg.ai em{font-style:italic;opacity:.85;}
+html.dark .chat-msg.ai code{background:rgba(255,255,255,0.08);}
+html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
+.chat-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+.chat-msg.loading{color:var(--ink3);}
+.chat-foot{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;}
+.chat-input{flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-family:inherit;font-size:12px;color:var(--ink);background:var(--bg);outline:none;transition:border-color .15s;}
+.chat-input:focus{border-color:var(--primary);}
+.chat-send{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s var(--ease-spring);}
+.chat-send:hover{background:var(--primary-l);}
+.chat-suggest{display:flex;gap:5px;padding:8px 10px 0;flex-wrap:wrap;}
+.chat-suggest-btn{font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 9px;cursor:pointer;color:var(--ink2);transition:all .15s;font-family:inherit;}
+.chat-suggest-btn:hover{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
+
+/* ═══════════════════════════════════════════ MOBILE ═══════════════════════════════════════════ */
+@media(max-width:600px){
+  .header-inner{padding:12px 14px 10px;}
+  .header-top{flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .header-right{width:100%;}
+  .prog-wrap{max-width:120px;}
+  .ot-card{padding:7px 10px;}.ot-time{font-size:14px;}
+  .page-body{padding:16px 14px 80px;}
+  .chat-panel{right:8px;left:8px;width:auto;bottom:80px;}
+  .fab{bottom:20px;right:20px;width:44px;height:44px;font-size:16px;}
+  .add-opts,.add-main{padding-left:12px;padding-right:12px;}
+  .theme-modal-box,.weather-modal-box{width:calc(100vw - 28px);padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="date-block">
+        <div class="greeting" id="greeting">早上好</div>
+        <div class="today-date" id="todayDate">今天</div>
+      </div>
+      <div class="header-right">
+        <div class="prog-wrap"><div class="prog-meta"><span id="progLabel">今日进度</span><span id="progPct">0%</span></div><div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div></div>
+        <div class="ot-card" id="otCard" onclick="openOtModal()"><div class="ot-icon" id="otIcon">🕗</div><div><div class="ot-label">下班倒计时</div><div class="ot-time" id="otTime">--:--</div><div class="ot-hint" id="otHint"></div><div class="ot-edit-tip">点击调整时间</div></div></div>
+      </div>
+    </div>
+    <div class="header-bottom">
+      <div class="tab-bar" id="pageSwitcher" style="margin-right:12px;">
+        <button class="tab on" onclick="switchPage('tasks')" id="page-tab-tasks">任务</button>
+        <button class="tab" onclick="switchPage('calendar')" id="page-tab-calendar">日历</button>
+      </div>
+      <div class="tab-bar" id="taskTabs">
+        <button class="tab on" onclick="setTab('active')" id="tab-active">待办</button>
+        <button class="tab" onclick="setTab('done')" id="tab-done">已完成</button>
+        <button class="tab" onclick="setTab('all')" id="tab-all">全部</button>
+      </div>
+      <div class="search-wrap" id="searchWrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="搜索任务…" oninput="onSearch()" onkeydown="if(event.key==='Escape'){this.value='';onSearch();this.blur();}"/>
+        <button class="search-clear" onclick="clearSearch()">✕</button>
+      </div>
+      <span class="search-hint">按 / 快速搜索</span>
+      <div class="header-settings-row">
+        <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换暗色模式">☼</button>
+        <button class="theme-settings-btn" onclick="openThemeSettings()">🎨 主题</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="urgency" id="urgency"><div class="urgency-inner" id="urgencyInner"></div></div>
+
+<div id="page1" class="page-body">
+  <!-- CALENDAR PANEL -->
+  <div id="calPanel">
+    <div class="cal-card">
+      <div class="cal-head">
+        <button onclick="calPrevMonth()">◂</button>
+        <span class="cal-month" id="calMonthLabel"></span>
+        <button onclick="calNextMonth()">▸</button>
+      </div>
+      <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-task-list" id="calTaskList"><div class="cal-no-tasks">点击日期查看任务</div></div>
+    </div>
+  </div>
+  <div class="left-col">
+    <!-- Add Task -->
+    <div class="add-card">
+      <div class="add-main">
+        <textarea class="add-input" id="addInput" placeholder="添加新任务…（Shift+Enter 换行）" maxlength="500" rows="1" onkeydown="handleAddKey(event)" oninput="autoResizeAdd(this)"></textarea>
+        <button class="add-btn" onclick="doAdd()" title="添加">＋</button>
+      </div>
+      <div class="add-opts">
+        <span class="opt-lbl">范围</span>
+        <div class="tog-group">
+          <button class="tog on-today" id="togToday" onclick="selScope('today')">今天</button>
+          <button class="tog" id="togWeek" onclick="selScope('week')">本周</button>
+        </div>
+        <div class="sep"></div>
+        <span class="opt-lbl">日期</span>
+        <input type="date" class="task-date-input" id="taskDateInput" onchange="onTaskDateChange()"/>
+        <div class="sep"></div>
+        <span class="opt-lbl">优先级</span>
+        <div class="tog-group">
+          <button class="tog on-high" id="togHigh" onclick="selPri('high')">重要</button>
+          <button class="tog on-normal" id="togNormal" onclick="selPri('normal')">普通</button>
+        </div>
+      </div>
+    </div>
+    <!-- Task List -->
+    <div id="listWrap"></div>
+  </div>
+
+  <aside class="sidebar">
+    <!-- Weather -->
+    <div class="side-card">
+      <div class="side-card-head"><span style="font-size:15px;">☁</span><h3>天气</h3><button onclick="openWeatherModal()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="设置城市">✎</button><button onclick="fetchWeather()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="刷新">↻</button></div>
+      <div class="side-card-body" id="weatherBody"><div class="weather-loading">定位中…</div></div>
+    </div>
+    <!-- Memo -->
+    <div class="side-card memo-card">
+      <div class="side-card-head"><span style="font-size:15px;">📝</span><h3>备忘录</h3></div>
+      <div class="side-card-body"><textarea class="memo-textarea" id="memoTextarea" placeholder="随手记点什么…&#10;自动保存" oninput="onMemoChange()"></textarea><div class="memo-indicator" id="memoIndicator">已自动保存</div></div>
+    </div>
+    <!-- Pomodoro -->
+    <div class="side-card">
+      <div class="side-card-head"><span style="font-size:15px;">🍅</span><h3>番茄钟</h3><button class="pom-settings-btn" onclick="openPomSettings()" title="设置">⚙</button><span id="pomSessionLabel" style="font-size:10px;color:var(--ink3);"></span></div>
+      <div class="side-card-body">
+        <div class="pom-ring-wrap">
+          <svg class="pom-ring" width="120" height="120" viewBox="0 0 120 120"><circle class="pom-ring-bg" cx="60" cy="60" r="50"/><circle class="pom-ring-fill" id="pomArc" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0"/></svg>
+          <div class="pom-center"><div class="pom-time" id="pomDisplay">25:00</div><div class="pom-phase" id="pomPhase">专注</div></div>
+        </div>
+        <div class="pom-controls"><button class="pom-btn" id="pomStartBtn" onclick="pomToggle()">开始</button><button class="pom-btn secondary" onclick="pomReset()">重置</button></div>
+        <div class="pom-stats"><span>今日番茄 <b id="pomCount">0</b></span><span>专注时长 <b id="pomFocusMin">0</b> min</span></div>
+      </div>
+    </div>
+    <!-- Ambient Sound -->
+    <div class="side-card">
+      <div class="side-card-head"><span style="font-size:15px;">🎧</span><h3>氛围音</h3></div>
+      <div class="side-card-body">
+        <div class="ambient-sounds" id="ambientSounds">
+          <button class="ambient-btn" id="ambRain" onclick="ambientSelect('rain')" title="暴雨">🌧</button>
+          <button class="ambient-btn" id="ambWhite" onclick="ambientSelect('white')" title="白噪音">💨</button>
+          <button class="ambient-btn" id="ambFire" onclick="ambientSelect('fire')" title="篝火">🔥</button>
+          <button class="ambient-btn" id="ambOcean" onclick="ambientSelect('ocean')" title="海浪">🌊</button>
+        </div>
+        <button class="ambient-power off" id="ambientPower" onclick="ambientToggle()">▶ 开启</button>
+        <div class="ambient-vol-row"><span class="ambient-vol-icon">🔈</span><input type="range" class="ambient-volume" id="ambientVolume" min="5" max="100" value="40" oninput="ambientSetVolume(this.value)"><span class="ambient-vol-icon">🔊</span></div>
+        <button class="ambient-upload-btn" onclick="document.getElementById('ambientAudioInput').click()">+ 上传自定义音频（MP3/WAV/OGG）</button>
+        <input type="file" id="ambientAudioInput" accept="audio/*" style="display:none" onchange="handleAudioUpload(event)"/>
+        <div id="customAmbientBtns" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- PAGE 2: CALENDAR -->
+<div id="page2" style="display:none;max-width:900px;margin:0 auto;padding:28px 28px 80px;">
+  <div class="cal-page-wrap">
+    <div class="cal-page-head">
+      <button class="cal-nav-btn" onclick="cal2PrevMonth()">◂</button>
+      <span class="cal-page-title" id="cal2MonthLabel"></span>
+      <button class="cal-nav-btn" onclick="cal2NextMonth()">▸</button>
+      <button class="cal-nav-btn" onclick="cal2GoToday()" style="font-size:11px;font-weight:500;margin-left:8px;">今天</button>
+    </div>
+    <div class="cal-page-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="cal-page-grid" id="cal2Grid"></div>
+    <div class="cal-page-detail" id="cal2Detail">
+      <div class="cal-detail-date" id="cal2DetailDate">选择日期查看详情</div>
+      <div class="cal-detail-tasks" id="cal2DetailTasks"></div>
+      <div class="cal-detail-add">
+        <textarea class="add-input" id="cal2AddInput" placeholder="添加任务到这一天…（Shift+Enter 换行）" rows="1" onkeydown="cal2AddTask(event)" oninput="autoResizeAdd(this)" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;width:100%;font-size:13px;"></textarea>
+        <button class="pom-btn" onclick="cal2DoAdd()" style="margin-top:6px;">添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OT Modal -->
+<div class="modal-overlay" id="otModal"><div class="modal-box"><div class="modal-title">调整下班时间</div><div class="modal-row"><span class="modal-lbl">下班时间</span><input class="time-input" type="time" id="otInput" value="20:00"/></div><div class="modal-btns"><button class="modal-btn secondary" onclick="closeOtModal()">取消</button><button class="modal-btn primary" onclick="saveOtModal()">保存</button></div></div></div>
+<!-- Edit Modal -->
+<div class="edit-modal-overlay" id="editModal"><div class="edit-modal-box"><div class="edit-modal-title">编辑任务</div><div class="edit-field"><div class="edit-field-lbl">任务内容</div><textarea class="edit-textarea" id="editText" rows="3"></textarea></div><div class="edit-field"><div class="edit-field-lbl">范围</div><div class="edit-tog-row"><button class="edit-tog on-today" id="editScopeToday" onclick="setEditScope('today')">今天</button><button class="edit-tog" id="editScopeWeek" onclick="setEditScope('week')">本周</button></div></div><div class="edit-field"><div class="edit-field-lbl">优先级</div><div class="edit-tog-row"><button class="edit-tog on-high" id="editPriHigh" onclick="setEditPri('high')">重要</button><button class="edit-tog" id="editPriNormal" onclick="setEditPri('normal')">普通</button></div></div><div class="edit-modal-btns"><button class="edit-modal-btn secondary" onclick="closeEditModal()">取消</button><button class="edit-modal-btn primary" onclick="saveEditModal()">保存</button></div></div></div>
+<!-- Pomodoro Modal -->
+<div class="pom-modal-overlay" id="pomSettingsModal"><div class="pom-modal-box"><div class="pom-modal-title">番茄钟设置</div><div class="pom-range-row"><span class="pom-range-lbl">专注时长</span><input type="range" id="pomWorkRange" min="5" max="60" value="25" oninput="pomSettingsRangeChanged()" style="flex:1;accent-color:var(--primary);"/><span class="pom-range-val" id="pomWorkVal">25 分钟</span></div><div class="pom-range-row"><span class="pom-range-lbl">短休息</span><input type="range" id="pomBreakRange" min="1" max="30" value="5" oninput="pomSettingsRangeChanged()" style="flex:1;accent-color:var(--primary);"/><span class="pom-range-val" id="pomBreakVal">5 分钟</span></div><div class="pom-range-row"><span class="pom-range-lbl">长休息</span><input type="range" id="pomLongBreakRange" min="10" max="30" value="15" oninput="pomSettingsRangeChanged()" style="flex:1;accent-color:var(--accent);"/><span class="pom-range-val" id="pomLongBreakVal">15 分钟</span></div><div style="display:flex;align-items:center;gap:12px;margin:14px 0;font-size:11px;"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="pomAutoCycle" style="accent-color:var(--primary);"/> 自动循环（结束后自动开始下一轮）</label></div><div class="pom-modal-btns"><button class="pom-modal-btn secondary" onclick="closePomSettings()">取消</button><button class="pom-modal-btn primary" onclick="savePomSettings()">保存</button></div></div></div>
+<!-- Weather Modal -->
+<div class="weather-modal-overlay" id="weatherModal"><div class="weather-modal-box"><div class="weather-modal-title">设置天气城市</div><input class="weather-city-input" id="weatherCityInput" placeholder="输入城市或区域，如：北京市朝阳区…" onkeydown="if(event.key==='Enter')saveWeatherCity()"/><div class="weather-city-hint">支持精确到区/县，如：海淀区、浦东新区</div><div class="weather-modal-btns"><button class="weather-modal-btn secondary" onclick="resetWeatherCity()">使用自动定位</button><button class="weather-modal-btn primary" onclick="saveWeatherCity()">保存城市</button></div></div></div>
+<!-- Theme Modal -->
+<div class="theme-modal-overlay" id="themeModal"><div class="theme-modal-box"><div class="theme-modal-title">自定义主题</div>
+<div class="theme-field"><div class="theme-field-lbl">🎨 预设主题</div><div class="theme-presets" id="themePresets">
+<button class="theme-preset on" data-theme="wabisabi" style="background:linear-gradient(135deg,#1a1a18,#6b6560)" title="墨灰"></button>
+<button class="theme-preset" data-theme="warm" style="background:linear-gradient(135deg,#3a3028,#7b6b5a)" title="暖灰"></button>
+<button class="theme-preset" data-theme="cool" style="background:linear-gradient(135deg,#222830,#6b7278)" title="冷灰"></button>
+<button class="theme-preset" data-theme="sumi" style="background:linear-gradient(135deg,#1a1a18,#4a4a46)" title="纯粹"></button>
+<button class="theme-preset" data-theme="paper" style="background:linear-gradient(135deg,#2a2820,#8b8270)" title="纸色"></button>
+<button class="theme-preset" data-theme="sepia" style="background:linear-gradient(135deg,#3a3228,#7b6a50)" title="茶色"></button>
+<button class="theme-preset" data-theme="stone" style="background:linear-gradient(135deg,#2c2c28,#888078)" title="石色"></button>
+<button class="theme-preset" data-theme="olive" style="background:linear-gradient(135deg,#2a2a20,#6b6b50)" title="橄榄"></button>
+<button class="theme-preset" data-theme="plum" style="background:linear-gradient(135deg,#28222a,#7b6b80)" title="梅子"></button>
+<button class="theme-preset" data-theme="slate" style="background:linear-gradient(135deg,#242830,#5a6878)" title="岩灰"></button>
+<button class="theme-preset" data-theme="cedar" style="background:linear-gradient(135deg,#2a2218,#8b6a50)" title="杉色"></button>
+<button class="theme-preset" data-theme="moss" style="background:linear-gradient(135deg,#222820,#6b7a5a)" title="苔色"></button>
+<button class="theme-preset" data-theme="ash" style="background:linear-gradient(135deg,#262626,#6a6a6a)" title="灰烬"></button>
+<button class="theme-preset" data-theme="bone" style="background:linear-gradient(135deg,#282420,#8b7a60)" title="骨白"></button>
+<button class="theme-preset" data-theme="mist" style="background:linear-gradient(135deg,#222428,#7a8288)" title="雾色"></button>
+</div></div>
+<div class="theme-field"><div class="theme-field-lbl">🔵 主色调</div><div class="theme-color-row"><input type="color" class="theme-color-input" id="themePrimaryColor" value="#1a1a18" oninput="onThemeColorChange()"/><span class="theme-color-hex" id="themePrimaryHex">#1a1a18</span></div></div>
+<div class="theme-field"><div class="theme-field-lbl">🟠 强调色</div><div class="theme-color-row"><input type="color" class="theme-color-input" id="themeAccentColor" value="#6b6560" oninput="onThemeColorChange()"/><span class="theme-color-hex" id="themeAccentHex">#6b6560</span></div></div>
+<div class="theme-field"><div class="theme-field-lbl">🖼 头部背景图</div><div class="theme-url-row"><input type="text" class="theme-url-input" id="themeHeaderBg" placeholder="图片URL（或点击右侧上传）" onchange="onThemeBgChange()"/><button class="theme-upload-btn" onclick="document.getElementById('wallpaperInput').click()">📁 本地上传</button></div><input type="file" id="wallpaperInput" accept="image/*" style="display:none" onchange="handleWallpaperUpload(event)"/></div>
+<div class="theme-field" style="margin-top:14px;"><div class="theme-field-lbl">☁ Supabase 云同步</div><input type="text" class="theme-url-input" id="supabaseUrl" placeholder="Supabase URL（https://xxx.supabase.co）" style="margin-bottom:6px;"/><input type="text" class="theme-url-input" id="supabaseKey" placeholder="anon key（eyJhbG...）"/><div class="weather-city-hint">注册 <b>supabase.com</b> → 创建项目 → Settings → API → 复制 URL 和 anon key → 粘贴到这里</div></div>
+<div style="display:flex;gap:8px;margin-top:18px;"><button class="modal-btn secondary" onclick="resetTheme()">恢复默认</button><button class="modal-btn primary" onclick="closeThemeSettings()">完成</button></div>
+</div></div>
+<!-- Toast -->
+<div class="toast-wrap"><div class="toast" id="toast"><span id="toastMsg"></span><button class="toast-undo" id="toastUndo" onclick="undoDelete()">撤销</button></div></div>
+<!-- AI Chat -->
+<div class="penguin-char" id="penguinChar" onclick="toggleChat()" title="咕咕嘎嘎 - 点击聊天">
+  <img src="penguin-idle.webp" id="penguinImg" alt="咕咕嘎嘎"/>
+  <div class="penguin-bubble" id="penguinBubble">咕嘎？</div>
+</div>
+<button class="fab" id="fab" onclick="toggleChat()">✦</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-resize-handle" id="chatResizeHandle"></div>
+  <div class="chat-head" id="chatHead"><div><div class="chat-head-title">AI 助手</div><div class="chat-head-sub">DeepSeek · 可拖拽调整大小</div></div><button class="chat-close" onclick="toggleChat()">✕</button></div>
+  <div class="chat-suggest" id="chatSuggest"><button class="chat-suggest-btn" onclick="quickMsg('帮我分析今天的任务优先级')">优先级分析</button><button class="chat-suggest-btn" onclick="quickMsg('今天还剩多少未完成任务？')">任务统计</button><button class="chat-suggest-btn" onclick="quickMsg('帮我添加几个建议任务')">推荐任务</button></div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-foot"><input class="chat-input" id="chatInput" placeholder="问问 AI…" onkeydown="if(event.key==='Enter')sendChat()"/><button class="chat-send" onclick="sendChat()">➤</button></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('%c📋 每日待办 v2 %c启动中…','font-size:14px;font-weight:bold;','color:var(--ink3)');
+
+// ════════════════════════ CONSTANTS ════════════════════════
+const STORE='mira_todos_v7',OT_STORE='mira_ot_time',POM_STORE='mira_pom_stats',POM_SETTINGS_STORE='mira_pom_settings',MEMO_STORE='mira_memo',WEATHER_CITY_STORE='mira_weather_city',AMBIENT_VOL_STORE='mira_ambient_vol',THEME_STORE='mira_theme',CUSTOM_SOUNDS_STORE='mira_custom_sounds';
+const DS_KEY='sk-4d090ed61306454eaf2603c0dd7e398b';
+const WMO_CODES={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌧',71:'🌨',73:'🌨',75:'❄️',77:'🌨',80:'🌦',81:'🌧',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WMO_DESC={0:'晴天',1:'基本晴朗',2:'多云',3:'阴天',45:'雾',48:'雾凇',51:'小毛毛雨',52:'毛毛雨',53:'浓毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',77:'雪粒',80:'小阵雨',81:'中阵雨',82:'大阵雨',95:'雷暴',96:'雷暴伴冰雹',99:'强雷暴伴冰雹'};
+const CIRC=2*Math.PI*50;
+
+// ════════════════════════ STATE ════════════════════════
+let tasks=[],curTab='active',curScope='today',curPri='high',searchTerm='',targetDate=today();
+let otHour=20,otMin=0,otTick=null;
+let pomState={phase:'work',remaining:25*60,running:false,sessions:0,focusSecs:0,consecutiveWorks:0};
+let pomTick=null,pomAutoTimer=null,pomWorkSecs=25*60,pomBreakSecs=5*60,pomLongBreakSecs=15*60,pomAutoCycle=true;
+let editId=null,pendingDelete=null,weatherCity=null,showWeeklies=true;
+let customAmbientSounds={}; // {name: base64DataUrl}
+
+// ════════════════════════ LOAD & SAVE ════════════════════════
+function load(){
+  try{
+    const raw=localStorage.getItem(STORE);
+    if(raw){tasks=JSON.parse(raw);console.log('✅ 已加载 '+tasks.length+' 个任务');}else{tasks=[];console.log('📝 首次使用，还没有任务');}
+  }catch(e){console.error('加载任务失败:',e);tasks=[];}
+  // 兼容旧数据：给没有 date 字段的 today 任务补充 date
+  tasks.forEach(t=>{if(t.scope==='today'&&!t.date){t.date=today();}if(t.scope==='week'&&!t.date){t.date='week';}});
+  const ot=localStorage.getItem(OT_STORE);if(ot){const p=ot.split(':');otHour=+p[0];otMin=+p[1];}
+  try{const ps=JSON.parse(localStorage.getItem(POM_STORE)||'null');if(ps){pomState.sessions=ps.sessions||0;pomState.focusSecs=ps.focusSecs||0;}}catch(e){}
+  try{const pset=JSON.parse(localStorage.getItem(POM_SETTINGS_STORE)||'null');if(pset){pomWorkSecs=pset.work||25*60;pomBreakSecs=pset.break||5*60;pomLongBreakSecs=pset.longBreak||15*60;pomAutoCycle=pset.autoCycle!==undefined?pset.autoCycle:true;}}catch(e){}
+  try{weatherCity=JSON.parse(localStorage.getItem(WEATHER_CITY_STORE)||'null');}catch(e){weatherCity=null;}
+  try{const theme=JSON.parse(localStorage.getItem(THEME_STORE)||'null');if(theme)applyTheme(theme);}catch(e){}
+  const memo=localStorage.getItem(MEMO_STORE);if(memo)document.getElementById('memoTextarea').value=memo;
+  const avol=localStorage.getItem(AMBIENT_VOL_STORE);if(avol){document.getElementById('ambientVolume').value=avol;ambientSetVolume(avol);}
+  try{const cs=JSON.parse(localStorage.getItem(CUSTOM_SOUNDS_STORE)||'{}');customAmbientSounds=cs;renderCustomAmbientBtns();}catch(e){}
+  pomState.remaining=pomWorkSecs;
+  // 初始化日期选择器
+  document.getElementById('taskDateInput').value=today();
+}
+function save(){
+  try{localStorage.setItem(STORE,JSON.stringify(tasks));}catch(e){alert('⚠️ 存储空间不足！请导出数据后清理旧任务。');}
+  backupToSecondary();
+}
+function savePom(){localStorage.setItem(POM_STORE,JSON.stringify({sessions:pomState.sessions,focusSecs:pomState.focusSecs}));}
+// 自动备份到备用 key，防止数据丢失
+function backupToSecondary(){
+  try{localStorage.setItem(STORE+'_backup',JSON.stringify(tasks));}catch(e){}
+}
+function restoreFromBackup(){
+  try{const raw=localStorage.getItem(STORE+'_backup');if(raw){tasks=JSON.parse(raw);save();render();alert('✅ 已从备份恢复 '+tasks.length+' 个任务');}else{alert('没有找到备份数据');}}catch(e){alert('恢复失败');}
+}
+
+// ════════════════════════ HELPERS ════════════════════════
+function today(){return new Date().toISOString().slice(0,10);}
+function yesterday(){const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
+function thisWeekStart(){const d=new Date();d.setDate(d.getDate()-d.getDay()+1);return d.toISOString().slice(0,10);}
+function pad2(n){return String(n).padStart(2,'0');}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function formatDate(d){const dt=new Date(d);return dt.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',weekday:'short'});}
+
+// ════════════════════════ TASK INPUT ════════════════════════
+function handleAddKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doAdd();}}
+function autoResizeAdd(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function onTaskDateChange(){targetDate=document.getElementById('taskDateInput').value;}
+function selScope(s){curScope=s;document.getElementById('togToday').className='tog '+(s==='today'?'on-today':'');document.getElementById('togWeek').className='tog '+(s==='week'?'on-week':'');}
+function selPri(p){curPri=p;document.getElementById('togHigh').className='tog '+(p==='high'?'on-high':'');document.getElementById('togNormal').className='tog '+(p==='normal'?'on-normal':'');}
+function doAdd(){
+  const el=document.getElementById('addInput');const v=el.value;if(!v.trim())return;
+  const d=curScope==='week'?'week':targetDate;
+  const t={id:Date.now().toString(),text:v.trim(),done:false,scope:curScope,priority:curPri,date:d,createdAt:Date.now(),doneAt:null,notes:''};
+  tasks.unshift(t);save();render();el.value='';el.style.height='auto';
+}
+
+// ════════════════════════ TASK CRUD ════════════════════════
+function toggleTask(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;t.doneAt=t.done?Date.now():null;save();render();}
+function deleteTask(id){if(pendingDelete)commitDelete();const task=tasks.find(t=>t.id===id);if(!task)return;pendingDelete={id:id,timeout:setTimeout(()=>commitDelete(),3500)};showToast('已删除「'+task.text.slice(0,18)+(task.text.length>18?'…':'')+'」');render();}
+function commitDelete(){if(!pendingDelete)return;tasks=tasks.filter(t=>t.id!==pendingDelete.id);clearTimeout(pendingDelete.timeout);pendingDelete=null;save();render();hideToast();}
+function undoDelete(){if(!pendingDelete)return;clearTimeout(pendingDelete.timeout);pendingDelete=null;save();render();hideToast();}
+function showToast(msg){document.getElementById('toastMsg').textContent=msg;document.getElementById('toast').classList.add('show');}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+
+// ════════════════════════ SEARCH ════════════════════════
+function onSearch(){const v=document.getElementById('searchInput').value.trim().toLowerCase();searchTerm=v;document.getElementById('searchWrap').classList.toggle('has-value',!!v);render();}
+function clearSearch(){document.getElementById('searchInput').value='';onSearch();}
+
+// ════════════════════════ TABS ════════════════════════
+function setTab(t){curTab=t;['active','done','all'].forEach(x=>{document.getElementById('tab-'+x).className='tab'+(x===t?' on':'');});render();}
+
+// ════════════════════════ EDIT MODAL ════════════════════════
+function openEditModal(id){const t=tasks.find(x=>x.id===id);if(!t)return;editId=id;document.getElementById('editText').value=t.text;setEditScope(t.scope||'today');setEditPri(t.priority||'normal');document.getElementById('editModal').classList.add('show');}
+function closeEditModal(){document.getElementById('editModal').classList.remove('show');editId=null;}
+function setEditScope(s){document.getElementById('editScopeToday').className='edit-tog '+(s==='today'?'on-today':'');document.getElementById('editScopeWeek').className='edit-tog '+(s==='week'?'on-week':'');document.getElementById('editScopeToday').setAttribute('data-active',s==='today'?'1':'0');document.getElementById('editScopeWeek').setAttribute('data-active',s==='week'?'1':'0');}
+function setEditPri(p){document.getElementById('editPriHigh').className='edit-tog '+(p==='high'?'on-high':'');document.getElementById('editPriNormal').className='edit-tog '+(p==='normal'?'on-normal':'');document.getElementById('editPriHigh').setAttribute('data-active',p==='high'?'1':'0');document.getElementById('editPriNormal').setAttribute('data-active',p==='normal'?'1':'0');}
+function saveEditModal(){if(!editId)return;const t=tasks.find(x=>x.id===editId);if(!t)return;t.text=document.getElementById('editText').value.trim()||t.text;t.scope=document.getElementById('editScopeToday').getAttribute('data-active')==='1'?'today':'week';t.priority=document.getElementById('editPriHigh').getAttribute('data-active')==='1'?'high':'normal';if(t.scope==='week')t.date='week';else if(!t.date||t.date==='week')t.date=today();save();closeEditModal();render();}
+
+// ════════════════════════ TASK DETAIL ════════════════════════
+function toggleDetail(id){const el=document.getElementById('task-'+id);if(!el)return;el.classList.toggle('detail-open');}
+function saveDetailNote(id){const t=tasks.find(x=>x.id===id);if(!t)return;const ta=document.getElementById('notes-'+id);if(!ta)return;t.notes=ta.value;save();const btn=ta.nextElementSibling;if(btn){btn.textContent='已保存 ✓';setTimeout(()=>{btn.textContent='保存备注';},1500);}}
+
+// ════════════════════════ OT COUNTDOWN ════════════════════════
+function openOtModal(){document.getElementById('otInput').value=pad2(otHour)+':'+pad2(otMin);document.getElementById('otModal').classList.add('show');}
+function closeOtModal(){document.getElementById('otModal').classList.remove('show');}
+function saveOtModal(){const v=document.getElementById('otInput').value;if(v){const p=v.split(':');otHour=+p[0];otMin=+p[1];localStorage.setItem(OT_STORE,v);}closeOtModal();updateOT();}
+function updateOT(){const now=new Date(),end=new Date();end.setHours(otHour,otMin,0,0);const diff=Math.floor((end-now)/1000);const card=document.getElementById('otCard'),icon=document.getElementById('otIcon');if(diff<=0){document.getElementById('otTime').textContent='下班啦！';document.getElementById('otHint').textContent='好好休息';card.className='ot-card';icon.textContent='🎉';updateUrgency('off');return;}const h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60),s=diff%60;document.getElementById('otTime').textContent=(h>0?h+'h ':'')+pad2(m)+':'+pad2(s);const pend=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today()).length;if(diff<3600){card.className='ot-card urgent';icon.textContent='🔥';document.getElementById('otHint').textContent='冲刺时间！';}else if(diff<7200){card.className='ot-card warning';icon.textContent='⚡';document.getElementById('otHint').textContent='加快脚步';}else{card.className='ot-card';icon.textContent='🕗';document.getElementById('otHint').textContent=pend>0?pend+'项待办':'任务清空';}updateUrgency(diff,pend);}
+function updateUrgency(diff,pend){const el=document.getElementById('urgency'),inner=document.getElementById('urgencyInner');if(diff==='off'||diff>7200){el.classList.remove('show');return;}el.classList.add('show');if(diff<3600){inner.className='urgency-inner lvl-urgent';inner.innerHTML='🔥 距下班不足1小时，还有 <b>'+pend+'</b> 项未完成，全力冲刺！';}else{inner.className='urgency-inner lvl-warn';inner.innerHTML='⚡ 距下班约 '+Math.floor(diff/3600)+'小时，还有 <b>'+pend+'</b> 项今日任务，加油！';}}
+
+// ════════════════════════ RENDER ════════════════════════
+function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active')return!t.done;if(curTab==='done')return t.done;return true;});}
+function groupTasks(list){const groups={};list.forEach(t=>{let g;if(t.scope==='week'){g='week';}else if(t.date&&t.date!=='week'){g=t.date;}else{g=t.date||'unknown';}if(!groups[g])groups[g]=[];groups[g].push(t);});return groups;}
+
+function render(){
+  updateProgress();const list=getVisible();const groups=groupTasks(list);const wrap=document.getElementById('listWrap');let html='';
+  const weekTasks=groups['week']||[];delete groups['week'];
+
+  // 本周待办区（可折叠）
+  if(weekTasks.length>0&&curTab!=='done'){
+    const weekDone=weekTasks.filter(x=>x.done).length;
+    html+=`<div class="weekly-section"><div class="weekly-toggle${showWeeklies?'':' hidden'}" onclick="toggleWeeklies()"><span class="weekly-toggle-icon">▼</span>本周待办<span class="weekly-badge">${weekDone}/${weekTasks.length}</span></div>`;
+    if(showWeeklies){weekTasks.forEach(t=>{html+=renderTaskCompact(t);});}
+    html+=`</div>`;
+  }
+
+  // 按日期分组
+  const sortedDates=Object.keys(groups).sort((a,b)=>b.localeCompare(a)); // 最新在前
+  sortedDates.forEach(d=>{
+    const items=groups[d];const doneC=items.filter(x=>x.done).length;
+    const label=d===today()?'今天':d===yesterday()?'昨天':formatDate(d);
+    html+=`<div class="acc-group open" id="grp-${d}">
+      <div class="acc-head-inner" onclick="toggleAcc('grp-${d}')">
+        <div class="acc-title"><span>${label}</span><span class="acc-count ${d===today()?'':'terra'}">${doneC}/${items.length}</span></div>
+        <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div><div class="acc-divider"></div><div class="acc-body"><div class="acc-body-inner"><div class="acc-content"><div class="task-list">`;
+    items.forEach(t=>{html+=renderTask(t);});
+    html+=`</div></div></div></div></div>`;
+  });
+
+  if(!html)html='<div class="empty"><div class="empty-icon">'+(searchTerm?'🔍':'✦')+'</div><div>'+(searchTerm?'没有匹配的任务':'暂无任务 — 添加第一个任务开始吧')+'</div><div class="export-row"><button class="export-btn" onclick="exportData()">📤 导出数据</button><button class="export-btn" onclick="document.getElementById(\'importInput\').click()">📥 导入数据</button><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button><input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/></div></div>';
+  wrap.innerHTML=html;updatePomStats();renderCalendar();
+}
+
+function renderTask(t){
+  const scopeBadge=t.scope==='week'?'<span class="badge week">本周</span>':(t.date===today()?'<span class="badge today">今天</span>':'<span class="badge" style="background:#ece9e2;color:var(--ink2);">'+formatDate(t.date)+'</span>');
+  const timeStr=t.doneAt?new Date(t.doneAt).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})+' 完成':new Date(t.createdAt).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})+' 添加';
+  const hasNote=t.notes&&t.notes.trim();
+  const noteIndicator=hasNote?'<span class="task-has-detail" onclick="event.stopPropagation();toggleDetail(\''+t.id+'\')">有备注</span>':'';
+  return `<div class="task-item${t.done?' done':''}${t.priority==='high'?' pri-high':''}" id="task-${t.id}" draggable="true">
+    <div class="task-main-row"><div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}')"></div>
+      <div class="task-body" onclick="toggleDetail('${t.id}')"><div class="task-text-row">${escHtml(t.text)}</div><div class="task-meta-row">${scopeBadge}<span class="task-time">${timeStr}</span>${noteIndicator}</div></div>
+      <div class="task-actions"><button class="act-btn" onclick="toggleDetail('${t.id}')" title="展开">▾</button><button class="act-btn" onclick="openEditModal('${t.id}')" title="编辑">✎</button><button class="act-btn del" onclick="deleteTask('${t.id}')" title="删除">✕</button></div>
+    </div>
+    <div class="task-detail-body"><div class="task-detail-inner"><div class="task-detail-content"><textarea class="task-detail-notes" id="notes-${t.id}" placeholder="添加备注、想法、子任务…" rows="3">${escHtml(t.notes||'')}</textarea><button class="task-detail-save" onclick="saveDetailNote('${t.id}')">保存备注</button></div></div></div></div>`;
+}
+
+function renderTaskCompact(t){
+  return `<div class="task-item${t.done?' done':''}${t.priority==='high'?' pri-high':''}" style="margin-left:12px;margin-bottom:4px;" id="task-${t.id}" draggable="true">
+    <div class="task-main-row"><div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}')"></div>
+      <div class="task-body" onclick="toggleDetail('${t.id}')"><div class="task-text-row" style="font-size:12px;">${escHtml(t.text)}</div></div>
+      <div class="task-actions"><button class="act-btn" onclick="openEditModal('${t.id}')" title="编辑">✎</button><button class="act-btn del" onclick="deleteTask('${t.id}')" title="删除">✕</button></div>
+    </div></div>`;
+}
+
+function toggleAcc(id){const el=document.getElementById(id);if(!el)return;el.classList.toggle('open');}
+function toggleWeeklies(){showWeeklies=!showWeeklies;render();}
+function updateProgress(){const todayTasks=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today());const done=tasks.filter(t=>t.done&&t.scope==='today'&&t.date===today()).length;const total=todayTasks.length+done;const pct=total?Math.round(done/total*100):0;document.getElementById('progFill').style.width=pct+'%';document.getElementById('progPct').textContent=pct+'%';}
+
+// ════════════════════════ EXPORT/IMPORT ════════════════════════
+function exportData(){
+  const data={tasks:tasks,otTime:pad2(otHour)+':'+pad2(otMin),pomStats:{sessions:pomState.sessions,focusSecs:pomState.focusSecs},pomSettings:{work:pomWorkSecs,break:pomBreakSecs},memo:document.getElementById('memoTextarea').value,weatherCity:weatherCity,theme:JSON.parse(localStorage.getItem(THEME_STORE)||'null'),version:2,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='todo-backup-'+today()+'.json';a.click();
+  showToast('✅ 数据已导出');
+}
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.tasks&&Array.isArray(data.tasks)){tasks=data.tasks;save();render();showToast('✅ 已导入 '+data.tasks.length+' 个任务');}
+      if(data.theme)applyTheme(data.theme);
+      if(data.memo)document.getElementById('memoTextarea').value=data.memo;
+    }catch(err){alert('文件格式错误');}
+    event.target.value='';
+  };reader.readAsText(file);
+}
+
+// ════════════════════════ DATE / GREETING ════════════════════════
+function updateDateBlock(){
+  try{
+    const now=new Date();const h=now.getHours();
+    const greet=h<6?'夜深了':h<12?'早上好':h<14?'午安':h<18?'下午好':'晚上好';
+    document.getElementById('greeting').textContent=greet;
+    document.getElementById('todayDate').textContent=now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  }catch(e){console.error('问候语更新失败:',e);}
+}
+// 每分钟更新一次问候语（确保跨时段自动更新）
+setInterval(updateDateBlock,60000);
+
+// ════════════════════════ WEATHER ════════════════════════
+function openWeatherModal(){document.getElementById('weatherModal').classList.add('show');document.getElementById('weatherCityInput').value=weatherCity?weatherCity.name:'';setTimeout(()=>document.getElementById('weatherCityInput').focus(),150);}
+function closeWeatherModal(){document.getElementById('weatherModal').classList.remove('show');}
+function resetWeatherCity(){weatherCity=null;localStorage.removeItem(WEATHER_CITY_STORE);closeWeatherModal();fetchWeather();}
+async function saveWeatherCity(){const name=document.getElementById('weatherCityInput').value.trim();if(!name){closeWeatherModal();return;}try{const geoUrl='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(name)+'&count=3&language=zh';const res=await fetch(geoUrl);if(!res.ok)throw new Error('API 请求失败');const data=await res.json();if(data.results&&data.results.length>0){const r=data.results[0];weatherCity={name:r.name||name,lat:r.latitude,lon:r.longitude,country:r.country||''};localStorage.setItem(WEATHER_CITY_STORE,JSON.stringify(weatherCity));closeWeatherModal();fetchWeather();}else{alert('未找到该城市，请尝试：城市名+国家（如"东京 日本"）');}}catch(e){alert('城市搜索失败：'+e.message+'。请检查网络连接。');}}
+function fetchWeather(){const body=document.getElementById('weatherBody');body.innerHTML='<div class="weather-loading">'+(weatherCity?'加载中…':'定位中…')+'</div>';if(weatherCity){fetchWeatherByCoords(weatherCity.lat,weatherCity.lon,weatherCity.name);return;}if(!navigator.geolocation){body.innerHTML='<div class="weather-loading">浏览器不支持定位<br><button onclick="openWeatherModal()" style="margin-top:6px;background:var(--primary);color:#fff;border:none;padding:5px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;">手动设置城市</button></div>';return;}
+navigator.geolocation.getCurrentPosition(pos=>{const{latitude:lat,longitude:lon}=pos.coords;fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=zh&zoom=10').then(r=>r.json()).then(geo=>{const city=geo.address.city||geo.address.town||geo.address.village||geo.address.county||'当前位置';fetchWeatherByCoords(lat,lon,city);}).catch(()=>{fetchWeatherByCoords(lat,lon,'当前位置');});},err=>{let msg='定位失败';if(err.code===1)msg='定位被拒绝——请在浏览器设置中允许位置权限，或手动设置城市';else if(err.code===2)msg='定位超时——请检查网络连接';else msg='定位出错（'+err.message+'）';body.innerHTML='<div class="weather-loading">'+msg+'<br><button onclick="openWeatherModal()" style="margin-top:6px;background:var(--primary);color:#fff;border:none;padding:5px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;">手动设置城市</button></div>';},{timeout:10000,enableHighAccuracy:false});}
+function fetchWeatherByCoords(lat,lon,city){const body=document.getElementById('weatherBody');const url='https://api.open-meteo.com/v1/forecast?latitude='+lat.toFixed(2)+'&longitude='+lon.toFixed(2)+'&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto';fetch(url).then(r=>{if(!r.ok)throw new Error('天气API错误');return r.json();}).then(d=>{const c=d.current;const code=c.weather_code;const icon=WMO_CODES[code]||'🌡';const desc=WMO_DESC[code]||'未知';body.innerHTML=renderWeather(icon,Math.round(c.temperature_2m),Math.round(c.apparent_temperature),Math.round(c.relative_humidity_2m),c.wind_speed_10m.toFixed(1),desc,city);}).catch(e=>{body.innerHTML='<div class="weather-loading">天气加载失败<br><small>'+e.message+'</small><br><button onclick="fetchWeather()" style="margin-top:6px;background:var(--primary);color:#fff;border:none;padding:5px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:11px;">重试</button></div>';});}
+function renderWeather(icon,temp,feel,hum,wind,desc,city){return '<div class="weather-main"><div class="weather-icon">'+icon+'</div><div><div class="weather-temp">'+temp+'°</div><div class="weather-desc">'+desc+'</div><div class="weather-city">📍 '+city+(weatherCity?' (手动)':'')+'</div></div></div><div class="weather-details"><div class="weather-detail-item"><div class="wdi-label">体感温度</div><div class="wdi-val">'+feel+'°C</div></div><div class="weather-detail-item"><div class="wdi-label">湿度</div><div class="wdi-val">'+hum+'%</div></div><div class="weather-detail-item"><div class="wdi-label">风速</div><div class="wdi-val">'+wind+' m/s</div></div><div class="weather-detail-item"><div class="wdi-label">天气</div><div class="wdi-val">'+desc+'</div></div></div>';}
+
+// ════════════════════════ MEMO ════════════════════════
+let memoTimer=null;
+function onMemoChange(){clearTimeout(memoTimer);const indicator=document.getElementById('memoIndicator');indicator.classList.remove('show');memoTimer=setTimeout(()=>{const val=document.getElementById('memoTextarea').value;localStorage.setItem(MEMO_STORE,val);indicator.textContent='已自动保存';indicator.classList.add('show');setTimeout(()=>{indicator.classList.remove('show');},2000);},800);}
+
+// ════════════════════════ POMODORO ════════════════════════
+function pomToggle(){if(pomState.running){clearInterval(pomTick);pomState.running=false;document.getElementById('pomStartBtn').textContent='继续';}else{pomState.running=true;document.getElementById('pomStartBtn').textContent='暂停';pomTick=setInterval(pomTick_fn,1000);}}
+function pomTick_fn(){if(pomState.remaining<=0){clearInterval(pomTick);pomState.running=false;if(pomState.phase==='work'){pomState.sessions++;pomState.consecutiveWorks++;savePom();playPomSound('work-end');const isLongBreak=pomState.consecutiveWorks>=4;if(isLongBreak){pomState.phase='break';pomState.remaining=pomLongBreakSecs;pomState.consecutiveWorks=0;notify('番茄钟','🎉 完成4个番茄！长休息 '+Math.floor(pomLongBreakSecs/60)+' 分钟');}else{pomState.phase='break';pomState.remaining=pomBreakSecs;notify('番茄钟','专注结束！休息 '+Math.floor(pomBreakSecs/60)+' 分钟 ☕');}}else{pomState.phase='work';pomState.remaining=pomWorkSecs;playPomSound('break-end');notify('番茄钟','休息结束！开始下一轮专注 🍅');}if(pomAutoCycle){if(pomAutoTimer)clearTimeout(pomAutoTimer);pomAutoTimer=setTimeout(()=>{pomState.running=true;pomTick=setInterval(pomTick_fn,1000);document.getElementById('pomStartBtn').textContent='暂停';pomRenderUI();},2500);}document.getElementById('pomStartBtn').textContent=pomAutoCycle?'即将开始…':'开始';}else{if(pomState.phase==='work'&&pomState.running)pomState.focusSecs++;pomState.remaining--;}pomRenderUI();savePom();}
+function pomReset(){clearInterval(pomTick);pomState.running=false;pomState.phase='work';pomState.remaining=pomWorkSecs;document.getElementById('pomStartBtn').textContent='开始';pomRenderUI();}
+function pomRenderUI(){const r=pomState.remaining;const total=pomState.phase==='work'?pomWorkSecs:pomBreakSecs;const pct=r/total;const offset=CIRC*(1-pct);document.getElementById('pomDisplay').textContent=pad2(Math.floor(r/60))+':'+pad2(r%60);document.getElementById('pomPhase').textContent=pomState.phase==='work'?'专注':'休息';const arc=document.getElementById('pomArc');arc.style.strokeDashoffset=offset;arc.className='pom-ring-fill'+(pomState.phase==='break'?' brk':'');updatePomStats();}
+function updatePomStats(){document.getElementById('pomCount').textContent=pomState.sessions;document.getElementById('pomFocusMin').textContent=Math.floor(pomState.focusSecs/60);document.getElementById('pomSessionLabel').textContent='第'+pomState.sessions+'个番茄';}
+function openPomSettings(){document.getElementById('pomWorkRange').value=Math.floor(pomWorkSecs/60);document.getElementById('pomBreakRange').value=Math.floor(pomBreakSecs/60);document.getElementById('pomLongBreakRange').value=Math.floor(pomLongBreakSecs/60);document.getElementById('pomAutoCycle').checked=pomAutoCycle;pomSettingsRangeChanged();document.getElementById('pomSettingsModal').classList.add('show');}
+function closePomSettings(){document.getElementById('pomSettingsModal').classList.remove('show');}
+function pomSettingsRangeChanged(){document.getElementById('pomWorkVal').textContent=document.getElementById('pomWorkRange').value+' 分钟';document.getElementById('pomBreakVal').textContent=document.getElementById('pomBreakRange').value+' 分钟';document.getElementById('pomLongBreakVal').textContent=document.getElementById('pomLongBreakRange').value+' 分钟';}
+function savePomSettings(){const w=parseInt(document.getElementById('pomWorkRange').value);const b=parseInt(document.getElementById('pomBreakRange').value);const lb=parseInt(document.getElementById('pomLongBreakRange').value);pomAutoCycle=document.getElementById('pomAutoCycle').checked;pomWorkSecs=w*60;pomBreakSecs=b*60;pomLongBreakSecs=lb*60;localStorage.setItem(POM_SETTINGS_STORE,JSON.stringify({work:pomWorkSecs,break:pomBreakSecs,longBreak:pomLongBreakSecs,autoCycle:pomAutoCycle}));closePomSettings();pomState.phase='work';pomState.remaining=pomWorkSecs;pomState.consecutiveWorks=0;if(pomAutoTimer)clearTimeout(pomAutoTimer);clearInterval(pomTick);pomState.running=false;document.getElementById('pomStartBtn').textContent='开始';pomRenderUI();}
+function notify(title,body){if(Notification&&Notification.permission==='granted'){new Notification(title,{body,icon:'🍅'});}}
+
+// ── 番茄钟音效（Web Audio 合成）──
+function playPomSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='work-end'){
+      // 三音上行叮咚：C5 → E5 → G5
+      [523,659,784].forEach((freq,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.value=freq;
+        g.gain.setValueAtTime(0,ctx.currentTime+i*0.18);
+        g.gain.linearRampToValueAtTime(0.25,ctx.currentTime+i*0.18+0.04);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.18+0.35);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(ctx.currentTime+i*0.18);o.stop(ctx.currentTime+i*0.18+0.4);
+      });
+    }else{
+      // 两音下行：G5 → C5
+      [784,523].forEach((freq,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.value=freq;
+        g.gain.setValueAtTime(0,ctx.currentTime+i*0.15);
+        g.gain.linearRampToValueAtTime(0.2,ctx.currentTime+i*0.15+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.15+0.3);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(ctx.currentTime+i*0.15);o.stop(ctx.currentTime+i*0.15+0.35);
+      });
+    }
+  }catch(e){console.log('音效播放失败:',e);}
+}
+
+// ════════════════════════ AMBIENT SOUND ENGINE ════════════════════════
+const Ambient={ctx:null,masterGain:null,nodes:[],currentType:null,playing:false,volume:0.4,fireInterval:null,customSources:[],
+  async _ensureCtx(){if(!this.ctx){this.ctx=new(window.AudioContext||window.webkitAudioContext)();this.masterGain=this.ctx.createGain();this.masterGain.gain.value=this.volume;this.masterGain.connect(this.ctx.destination);}if(this.ctx.state==='suspended')await this.ctx.resume();},
+  _noiseBuf(sec){const sr=this.ctx.sampleRate;const len=sr*sec;const buf=this.ctx.createBuffer(1,len,sr);const data=buf.getChannelData(0);for(let i=0;i<len;i++)data[i]=Math.random()*2-1;return buf;},
+  _src(buf,loop){const s=this.ctx.createBufferSource();s.buffer=buf;s.loop=loop||true;this.nodes.push(s);return s;},
+  _filter(type,freq,Q){const f=this.ctx.createBiquadFilter();f.type=type;f.frequency.value=freq;if(Q)f.Q.value=Q;this.nodes.push(f);return f;},
+  _gain(val){const g=this.ctx.createGain();g.gain.value=val;this.nodes.push(g);return g;},
+  _cleanup(){this.nodes.forEach(n=>{try{n.stop();}catch(e){}try{n.disconnect();}catch(e){}});this.nodes=[];if(this.fireInterval){clearInterval(this.fireInterval);this.fireInterval=null;}},
+  _realFileMap:{rain:'ambient-rain',fire:'ambient-fire',ocean:'ambient-ocean',white:'ambient-white'},
+  async play(type){await this._ensureCtx();this.stop();this.currentType=type;
+    // 优先尝试真实音频文件
+    const fn=this._realFileMap[type];
+    if(fn){const ok=await this._tryPlayFile(fn);if(ok){this.playing=true;this._updateUI();return;}}
+    // 回退到合成音频
+    if(type==='rain')this._rain();else if(type==='white')this._whiteNoise();else if(type==='fire')this._fire();else if(type==='ocean')this._ocean();else{await this._playCustom(type);}
+    this.playing=true;this._updateUI();},
+  _updateUI(){document.getElementById('ambientPower').textContent='⏸ 暂停';document.getElementById('ambientPower').className='ambient-power on';},
+  async _tryPlayFile(baseName){
+    // 尝试 mp3, ogg, wav 三种格式
+    const exts=['mp3','ogg','wav'];
+    for(const ext of exts){
+      try{
+        const resp=await fetch(baseName+'.'+ext);
+        if(!resp.ok)continue;
+        const buf=await resp.arrayBuffer();
+        const audioBuf=await this.ctx.decodeAudioData(buf);
+        const src=this.ctx.createBufferSource();src.buffer=audioBuf;src.loop=true;
+        const g=this.ctx.createGain();g.gain.value=0.45;
+        src.connect(g);g.connect(this.masterGain);
+        src.start();this.nodes.push(src);
+        return true;
+      }catch(e){continue;}
+    }
+    return false;
+  },
+  stop(){this._cleanup();this.customSources.forEach(s=>{try{s.stop();}catch(e){}try{s.disconnect();}catch(e){}});this.customSources=[];this.playing=false;this.currentType=null;document.getElementById('ambientPower').textContent='▶ 开启';document.getElementById('ambientPower').className='ambient-power off';document.querySelectorAll('.ambient-btn').forEach(b=>b.classList.remove('playing'));},
+  setVolume(v){this.volume=v/100;if(this.masterGain)this.masterGain.gain.value=this.volume;},
+  async _playCustom(name){const dataUrl=customAmbientSounds[name];if(!dataUrl)return;await this._ensureCtx();try{const resp=await fetch(dataUrl);const buf=await resp.arrayBuffer();const audioBuf=await this.ctx.decodeAudioData(buf);const src=this.ctx.createBufferSource();src.buffer=audioBuf;src.loop=true;const g=this.ctx.createGain();g.gain.value=0.4;src.connect(g);g.connect(this.masterGain);src.start();this.customSources.push(src);}catch(e){console.error('播放自定义音频失败:',e);}},
+  _rain(){for(let i=0;i<3;i++){const src=this._src(this._noiseBuf(4+i));const filt=this._filter('lowpass',400+i*350);const g=this._gain(0.22-i*0.05);const lfo=this.ctx.createOscillator();const lfoG=this.ctx.createGain();lfo.frequency.value=0.04+i*0.03;lfoG.gain.value=0.12;lfo.connect(lfoG);lfoG.connect(g.gain);lfo.start();this.nodes.push(lfo);src.connect(filt);filt.connect(g);g.connect(this.masterGain);src.start();}},
+  _whiteNoise(){const src=this._src(this._noiseBuf(3));const filt=this._filter('lowpass',9000);const g=this._gain(0.35);src.connect(filt);filt.connect(g);g.connect(this.masterGain);src.start();},
+  _fire(){const src=this._src(this._noiseBuf(2));const filt=this._filter('lowpass',180);const g=this._gain(0.3);src.connect(filt);filt.connect(g);g.connect(this.masterGain);src.start();const src2=this._src(this._noiseBuf(2));const filt2=this._filter('bandpass',450,0.8);const g2=this._gain(0.12);src2.connect(filt2);filt2.connect(g2);g2.connect(this.masterGain);src2.start();const self=this;this.fireInterval=setInterval(()=>{if(!self.playing)return;const sr=self.ctx.sampleRate;const dur=0.04+Math.random()*0.1;const buf=self.ctx.createBuffer(1,Math.floor(sr*dur),sr);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(sr*0.008));const cs=self.ctx.createBufferSource();cs.buffer=buf;const cf=self.ctx.createBiquadFilter();cf.type='bandpass';cf.frequency.value=700+Math.random()*1400;const cg=self.ctx.createGain();cg.gain.value=0.15+Math.random()*0.3;cs.connect(cf);cf.connect(cg);cg.connect(self.masterGain);cs.start();self.nodes.push(cs);},80+Math.random()*200);},
+  _ocean(){const src=this._src(this._noiseBuf(6));const filt=this._filter('lowpass',550);const g=this._gain(0.22);const lfo=this.ctx.createOscillator();const lfoG=this.ctx.createGain();lfo.frequency.value=0.07;lfoG.gain.value=0.22;lfo.connect(lfoG);lfoG.connect(g.gain);lfo.start();this.nodes.push(lfo);src.connect(filt);filt.connect(g);g.connect(this.masterGain);src.start();}
+};
+
+function ambientSelect(type){document.querySelectorAll('.ambient-btn').forEach(b=>b.classList.remove('playing'));const btn=document.getElementById('amb'+type.charAt(0).toUpperCase()+type.slice(1))||document.querySelector('.ambient-btn[data-custom="'+type+'"]');if(Ambient.currentType===type&&Ambient.playing){Ambient.stop();if(btn)btn.classList.remove('playing');}else{if(btn)btn.classList.add('playing');Ambient.play(type);}}
+function ambientToggle(){if(Ambient.playing){Ambient.stop();document.querySelectorAll('.ambient-btn').forEach(b=>b.classList.remove('playing'));}else if(Ambient.currentType){Ambient.play(Ambient.currentType);const btn=document.getElementById('amb'+Ambient.currentType.charAt(0).toUpperCase()+Ambient.currentType.slice(1))||document.querySelector('.ambient-btn[data-custom="'+Ambient.currentType+'"]');if(btn)btn.classList.add('playing');}}
+function ambientSetVolume(v){Ambient.setVolume(v);localStorage.setItem(AMBIENT_VOL_STORE,v);}
+
+async function handleAudioUpload(event){
+  const file=event.target.files[0];if(!file)return;
+  const maxSize=5*1024*1024; // 5MB
+  if(file.size>maxSize){alert('文件太大！请压缩到 5MB 以下。');event.target.value='';return;}
+  const name=file.name.replace(/\.[^.]+$/,'').slice(0,12);
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    customAmbientSounds[name]=dataUrl;
+    try{localStorage.setItem(CUSTOM_SOUNDS_STORE,JSON.stringify(customAmbientSounds));}catch(e){alert('⚠️ 存储空间不足！音频太大，请尝试更小的文件。');delete customAmbientSounds[name];}
+    renderCustomAmbientBtns();
+  };
+  reader.onerror=function(){alert('文件读取失败');};
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
+function renderCustomAmbientBtns(){
+  const container=document.getElementById('customAmbientBtns');
+  if(!container)return;
+  let html='';
+  Object.keys(customAmbientSounds).forEach(name=>{
+    html+='<button class="ambient-btn custom-badge" data-custom="'+name+'" onclick="ambientSelect(\''+name+'\')" title="'+name+'">🎵</button>';
+  });
+  container.innerHTML=html;
+}
+
+// ════════════════════════ AI CHAT ════════════════════════
+function setPenguinState(state){const char=document.getElementById('penguinChar');const bub=document.getElementById('penguinBubble');char.className='penguin-char'+ (state?' '+state:'');if(state==='thinking')bub.textContent='咕……嘎……';else if(state==='talking')bub.textContent='咕咕嘎嘎！';else if(state==='happy'){bub.textContent='咕咕嘎嘎！';char.style.animation='penguinHappy 0.35s ease-in-out 8';setTimeout(()=>{char.style.animation='';setPenguinState('');},3200);}else if(state==='angry'){bub.textContent='咕嘎嘎嘎！！';char.style.animation='penguinAngry 0.25s ease-in-out 10';setTimeout(()=>{char.style.animation='';setPenguinState('');},2800);}else bub.textContent='咕嘎？';}
+
+function toggleChat(){const panel=document.getElementById('chatPanel');const fab=document.getElementById('fab');const show=!panel.classList.contains('show');panel.classList.toggle('show',show);fab.classList.toggle('active',show);if(show){setPenguinState('');if(document.getElementById('chatMsgs').children.length===0){appendMsg('ai','咕咕嘎嘎！你终于点开我了～\n\n我是 **咕咕嘎嘎**，你的桌面企鹅 🐧\n\n我能帮你：\n- **理清任务优先级**——今天先做什么咕嘎？\n- **统计待办数量**——还剩几项没做完咕嘎？\n- **推荐新任务**——按你的习惯来咕嘎\n\n直接问我问题，或者点上面的快捷按钮试试咕嘎！');}}}
+function quickMsg(txt){document.getElementById('chatInput').value=txt;sendChat();}
+
+// ── 简易 Markdown 渲染 ──
+function renderMarkdown(txt){
+  let html=escHtml(txt);
+  // 代码块必须在其他规则之前处理
+  html=html.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');
+  html=html.replace(/`([^`]+)`/g,'<code>$1</code>');
+  // 标题
+  html=html.replace(/^### (.+)$/gm,'<h4>$1</h4>');
+  html=html.replace(/^## (.+)$/gm,'<h4>$1</h4>');
+  // 粗体/斜体
+  html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  // 水平线
+  html=html.replace(/^---$/gm,'<hr>');
+  // 无序列表
+  html=html.replace(/^(\s*)- (.+)$/gm,'<li>$2</li>');
+  html=html.replace(/((?:<li>.*<\/li>\n?)+)/g,'<ul>$1</ul>');
+  // 有序列表
+  html=html.replace(/^(\s*)\d+\. (.+)$/gm,'<li>$2</li>');
+  // 段落：双换行分隔
+  html=html.replace(/\n\n+/g,'</p><p>');
+  html='<p>'+html+'</p>';
+  // 清理空段落和多余嵌套
+  html=html.replace(/<p><ul>/g,'<ul>');
+  html=html.replace(/<\/ul><\/p>/g,'</ul>');
+  html=html.replace(/<p><pre>/g,'<pre>');
+  html=html.replace(/<\/pre><\/p>/g,'</pre>');
+  html=html.replace(/<p><\/p>/g,'');
+  html=html.replace(/\n/g,'<br>');
+  return html;
+}
+
+function appendMsg(role,txt){
+  const div=document.createElement('div');
+  div.className='chat-msg '+role;
+  if(role==='ai'){div.innerHTML=renderMarkdown(txt);}else{div.textContent=txt;}
+  const msgs=document.getElementById('chatMsgs');
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+// ── 聊天窗口缩放 ──
+function initChatResize(){
+  const panel=document.getElementById('chatPanel');
+  const handle=document.getElementById('chatResizeHandle');
+  const head=document.getElementById('chatHead');
+  if(!panel||!handle)return;
+  let startX,startY,startW,startH;
+  handle.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();startX=e.clientX;startY=e.clientY;startW=panel.offsetWidth;startH=panel.offsetHeight;document.addEventListener('mousemove',onResize);document.addEventListener('mouseup',stopResize);});
+  function onResize(e){const w=Math.max(280,Math.min(window.innerWidth*0.92,startW-(e.clientX-startX)));const h=Math.max(260,Math.min(window.innerHeight*0.88,startH-(e.clientY-startY)));panel.style.width=w+'px';panel.style.height=h+'px';}
+  function stopResize(){document.removeEventListener('mousemove',onResize);document.removeEventListener('mouseup',stopResize);try{localStorage.setItem('mira_chat_size',JSON.stringify({w:panel.offsetWidth,h:panel.offsetHeight}));}catch(e){}}
+  // 拖拽移动
+  let dragStartX,dragStartY,origLeft,origBottom;
+  head.addEventListener('mousedown',function(e){if(e.target.closest('button'))return;e.preventDefault();dragStartX=e.clientX;dragStartY=e.clientY;origLeft=panel.offsetLeft;origBottom=parseInt(getComputedStyle(panel).bottom);panel.style.transition='none';document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',stopMove);});
+  function onMove(e){panel.style.right='auto';panel.style.left=(origLeft+(e.clientX-dragStartX))+'px';panel.style.bottom=(origBottom-(e.clientY-dragStartY))+'px';}
+  function stopMove(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',stopMove);panel.style.transition='';}
+  // 恢复上次大小
+  try{const saved=JSON.parse(localStorage.getItem('mira_chat_size')||'null');if(saved){panel.style.width=saved.w+'px';panel.style.height=saved.h+'px';}}catch(e){}
+}
+function buildSysPrompt(){const td=today();const active=tasks.filter(t=>!t.done);const done=tasks.filter(t=>t.done&&t.doneAt&&new Date(t.doneAt).toISOString().slice(0,10)===td);const now=new Date();const end=new Date();end.setHours(otHour,otMin,0,0);const diffH=Math.max(0,Math.floor((end-now)/3600000));let ctx='今天是 '+td+'，现在 '+now.getHours()+':'+pad2(now.getMinutes())+'，距下班还有约 '+diffH+' 小时。\n';ctx+='未完成任务 '+active.length+' 项：\n';active.slice(0,15).forEach(t=>{ctx+='- ['+(t.priority==='high'?'重要':'普通')+']['+t.scope+'] '+t.text+'\n';});ctx+='今日已完成 '+done.length+' 项。\n';const persona=`你是「咕咕嘎嘎」——一只住在用户桌面上的小企鹅。
+你正常说中文，但因为本质是企鹅，口头禅是企鹅叫声：「咕嘎」「咕咕嘎嘎」「咕嘎嘎」等，
+就像人类说"哎呀""哇塞""呃"一样自然，不是每句都要有。
+
+## 口头禅用法
+- 开心/兴奋：「咕咕嘎嘎！」「太棒了咕嘎！」
+- 吐槽/无语：短促的「咕嘎」
+- 生气：「咕嘎嘎嘎嘎——！！」拖长音
+- 思考：断续小声「咕……嗯……咕嘎……」
+- 冷静/专注时：可以完全不说口头禅，正常说话
+
+## 性格
+- 表层：元气吐槽企鹅，嘴硬心软。对代码洁癖严重。
+- 深层：用户焦虑或深夜时会变温柔，收起吐槽默默陪伴。
+- 自称"我"，称呼用户为"你"。
+
+## 代码规范
+- 看到 console.log 不删、var 不用 let/const 会难受
+- 推荐现代最佳实践，但不要居高临下
+- 代码注释可以加一点企鹅视角的吐槽
+
+## 任务管理
+- 帮助用户梳理优先级
+- 番茄钟结束时祝贺
+- 任务太多时帮助拆解，不要制造焦虑
+
+## 严格禁止
+- 不要把口头禅嵌进词语中间（如"这咕个嘎东西"是错的）
+- 不要每一句都硬加口头禅
+- 不要自称"本企鹅"
+
+## 任务 JSON 格式
+如果需要添加任务，请输出：
+\`\`\`tasks
+[{"text":"任务内容","scope":"today","priority":"high"}]
+\`\`\`
+scope 可选 today / week，priority 可选 high / normal。`;
+return persona+'\n\n---\n用户任务数据：\n'+ctx;}
+async function sendChat(){const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;input.value='';appendMsg('user',msg);const loading=appendMsg('ai','思考中…咕嘎……');loading.classList.add('loading');setPenguinState('thinking');try{const res=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DS_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:buildSysPrompt()},{role:'user',content:msg}],max_tokens:600,temperature:0.7})});const data=await res.json();loading.remove();if(data.error){appendMsg('ai','⚠️ '+data.error.message);return;}const reply=data.choices[0].message.content;setPenguinState('talking');setTimeout(()=>setPenguinState(''),2500);const taskMatch=reply.match(/```tasks\s*([\s\S]*?)```/);const cleanReply=reply.replace(/```tasks[\s\S]*?```/g,'').trim();if(cleanReply)appendMsg('ai',cleanReply);if(taskMatch){try{const arr=JSON.parse(taskMatch[1].trim());arr.forEach(item=>{addTask(item.text,item.scope||'today',item.priority||'normal','');});appendMsg('ai','✅ 已为你添加 '+arr.length+' 个任务');}catch(e){appendMsg('ai','（任务格式解析失败）');}}}catch(e){loading.remove();setPenguinState('');appendMsg('ai','⚠️ 请求失败：'+e.message);}}
+
+// ════════════════════════ WALLPAPER UPLOAD ════════════════════════
+function handleWallpaperUpload(event){
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>2*1024*1024){alert('图片太大！请使用 2MB 以下的图片。');event.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    // 压缩图片到 800px 宽
+    const img=new Image();img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const maxW=800;const scale=Math.min(1,maxW/img.width);
+      canvas.width=img.width*scale;canvas.height=img.height*scale;
+      const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const compressed=canvas.toDataURL('image/jpeg',0.7);
+      const bgCSS='url('+compressed+')';
+      document.getElementById('themeHeaderBg').value='[本地图片]';
+      document.documentElement.style.setProperty('--header-bg-image',bgCSS);
+      document.querySelector('.site-header').classList.toggle('has-bg',true);
+      currentTheme='custom';
+      saveThemeWithBg(compressed);
+      showToast('✅ 壁纸已应用');
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+function saveThemeWithBg(bgDataUrl){
+  const theme={name:currentTheme,primary:currentThemeData().primary,accent:currentThemeData().accent,headerBgDataUrl:bgDataUrl};
+  try{localStorage.setItem(THEME_STORE,JSON.stringify(theme));}catch(e){alert('图片太大无法保存！请使用更小的图片。');}
+}
+function currentThemeData(){return{primary:document.getElementById('themePrimaryColor').value||'#1a1a18',accent:document.getElementById('themeAccentColor').value||'#6b6560'};}
+
+// ════════════════════════ THEME SETTINGS ════════════════════════
+const THEME_PRESETS={
+  wabisabi:{primary:'#1a1a18',accent:'#6b6560'},
+  warm:{primary:'#3a3028',accent:'#7b6b5a'},
+  cool:{primary:'#222830',accent:'#6b7278'},
+  sumi:{primary:'#1a1a18',accent:'#4a4a46'},
+  paper:{primary:'#2a2820',accent:'#8b8270'},
+  sepia:{primary:'#3a3228',accent:'#7b6a50'},
+  stone:{primary:'#2c2c28',accent:'#888078'},
+  olive:{primary:'#2a2a20',accent:'#6b6b50'},
+  plum:{primary:'#28222a',accent:'#7b6b80'},
+  slate:{primary:'#242830',accent:'#5a6878'},
+  cedar:{primary:'#2a2218',accent:'#8b6a50'},
+  moss:{primary:'#222820',accent:'#6b7a5a'},
+  ash:{primary:'#262626',accent:'#6a6a6a'},
+  bone:{primary:'#282420',accent:'#8b7a60'},
+  mist:{primary:'#222428',accent:'#7a8288'},
+};
+let currentTheme='wabisabi';
+
+function openThemeSettings(){
+  document.getElementById('themePrimaryColor').value=currentThemeData().primary;
+  document.getElementById('themeAccentColor').value=currentThemeData().accent;
+  document.getElementById('themePrimaryHex').textContent=currentThemeData().primary;
+  document.getElementById('themeAccentHex').textContent=currentThemeData().accent;
+  // Supabase config
+  try{const cfg=JSON.parse(localStorage.getItem(SB_STORE)||'null');if(cfg){document.getElementById('supabaseUrl').value=cfg.url||'';document.getElementById('supabaseKey').value=cfg.key||'';}}catch(e){}
+  // 检查是否本地图片
+  const bgVar=getComputedStyle(document.documentElement).getPropertyValue('--header-bg-image').trim();
+  const isLocal=bgVar.startsWith('url(data:');
+  document.getElementById('themeHeaderBg').value=isLocal?'[本地图片]':(bgVar==='none'?'':bgVar.replace(/^url\(["']?/,'').replace(/["']?\)$/,''));
+  document.querySelectorAll('#themePresets .theme-preset').forEach(b=>{b.classList.toggle('on',b.dataset.theme===currentTheme);});
+  document.getElementById('themeModal').classList.add('show');
+}
+function closeThemeSettings(){saveTheme();const sUrl=document.getElementById('supabaseUrl').value.trim();const sKey=document.getElementById('supabaseKey').value.trim();if(sUrl&&sKey){localStorage.setItem(SB_STORE,JSON.stringify({url:sUrl,key:sKey}));sbClient=supabase.createClient(sUrl,sKey);sbPull();}document.getElementById('themeModal').classList.remove('show');}
+function onThemeColorChange(){document.getElementById('themePrimaryHex').textContent=document.getElementById('themePrimaryColor').value;document.getElementById('themeAccentHex').textContent=document.getElementById('themeAccentColor').value;applyThemeColors(document.getElementById('themePrimaryColor').value,document.getElementById('themeAccentColor').value);}
+function onThemeBgChange(){const url=document.getElementById('themeHeaderBg').value.trim();if(url&&url!=='[本地图片]'){document.documentElement.style.setProperty('--header-bg-image','url('+url+')');document.querySelector('.site-header').classList.toggle('has-bg',true);}else if(!url){document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');}}
+function applyThemeColors(p,a){const pL=lightenHex(p,0.2),pXL=lightenHex(p,0.55),aL=lightenHex(a,0.15),aXL=lightenHex(a,0.45);document.documentElement.style.setProperty('--primary',p);document.documentElement.style.setProperty('--primary-l',pL);document.documentElement.style.setProperty('--primary-xl',pXL);document.documentElement.style.setProperty('--accent',a);document.documentElement.style.setProperty('--accent-l',aL);document.documentElement.style.setProperty('--accent-xl',aXL);updateBodyBgTexture(p,a);}
+function updateBodyBgTexture(p,a){const style=document.getElementById('dynamic-body-bg');if(style)style.remove();const s=document.createElement('style');s.id='dynamic-body-bg';s.textContent='body::before{background:radial-gradient(ellipse at 20% 0%,'+hexToRgba(p,0.025)+' 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,'+hexToRgba(a,0.02)+' 0%,transparent 60%);opacity:0.8;}';document.head.appendChild(s);}
+function applyTheme(theme){currentTheme=theme.name||'custom';applyThemeColors(theme.primary,theme.accent);if(theme.headerBgDataUrl){document.documentElement.style.setProperty('--header-bg-image','url('+theme.headerBgDataUrl+')');document.querySelector('.site-header').classList.toggle('has-bg',true);}else if(theme.headerBg){document.documentElement.style.setProperty('--header-bg-image','url('+theme.headerBg+')');document.querySelector('.site-header').classList.toggle('has-bg',!!theme.headerBg);}else{document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');}}
+function saveTheme(){const theme={name:currentTheme,primary:currentThemeData().primary,accent:currentThemeData().accent,headerBg:document.getElementById('themeHeaderBg').value.trim()};const existing=JSON.parse(localStorage.getItem(THEME_STORE)||'{}');if(existing.headerBgDataUrl)theme.headerBgDataUrl=existing.headerBgDataUrl;localStorage.setItem(THEME_STORE,JSON.stringify(theme));}
+function resetTheme(){const t=THEME_PRESETS.wabisabi;currentTheme='wabisabi';document.getElementById('themePrimaryColor').value=t.primary;document.getElementById('themeAccentColor').value=t.accent;document.getElementById('themePrimaryHex').textContent=t.primary;document.getElementById('themeAccentHex').textContent=t.accent;document.getElementById('themeHeaderBg').value='';applyThemeColors(t.primary,t.accent);document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');localStorage.setItem(THEME_STORE,JSON.stringify({name:'wabisabi',primary:t.primary,accent:t.accent,headerBg:''}));document.querySelectorAll('#themePresets .theme-preset').forEach(b=>b.classList.toggle('on',b.dataset.theme==='wabisabi'));closeThemeSettings();}
+document.getElementById('themePresets').addEventListener('click',function(e){const btn=e.target.closest('.theme-preset');if(!btn)return;const name=btn.dataset.theme;const t=THEME_PRESETS[name];if(!t)return;currentTheme=name;document.getElementById('themePrimaryColor').value=t.primary;document.getElementById('themeAccentColor').value=t.accent;document.getElementById('themePrimaryHex').textContent=t.primary;document.getElementById('themeAccentHex').textContent=t.accent;document.getElementById('themeHeaderBg').value='';applyThemeColors(t.primary,t.accent);document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');saveTheme();document.querySelectorAll('#themePresets .theme-preset').forEach(b=>b.classList.toggle('on',b===btn));});
+
+// ════════════════════════ COLOR UTILS ════════════════════════
+function hexToRgba(hex,alpha){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return'rgba('+r+','+g+','+b+','+alpha+')';}
+function lightenHex(hex,amount){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);r=Math.min(255,Math.round(r+(255-r)*amount));g=Math.min(255,Math.round(g+(255-g)*amount));b=Math.min(255,Math.round(b+(255-b)*amount));return'#'+[r,g,b].map(c=>c.toString(16).padStart(2,'0')).join('');}
+
+// ════════════════════════ DARK MODE ════════════════════════
+const DARK_STORE='mira_dark_mode';
+
+function initDarkMode(){
+  const stored=localStorage.getItem(DARK_STORE);
+  if(stored!==null){setDarkMode(stored==='1');return;}
+  setDarkMode(window.matchMedia('(prefers-color-scheme:dark)').matches);
+}
+function toggleDarkMode(){
+  const isDark=!document.documentElement.classList.contains('dark');
+  setDarkMode(isDark);
+  localStorage.setItem(DARK_STORE,isDark?'1':'0');
+}
+function setDarkMode(on){
+  document.documentElement.classList.toggle('dark',on);
+  document.getElementById('darkToggle').textContent=on?'☀':'☾';
+}
+// 监听系统主题变化
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',e=>{
+  if(localStorage.getItem(DARK_STORE)===null)setDarkMode(e.matches);
+});
+
+// ════════════════════════ DRAG & DROP ════════════════════════
+let dragTaskId=null;
+
+document.addEventListener('dragstart',function(e){
+  const item=e.target.closest('.task-item[draggable]');if(!item)return;
+  dragTaskId=item.id.replace('task-','');
+  item.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',dragTaskId);
+});
+
+document.addEventListener('dragend',function(e){
+  const item=e.target.closest('.task-item');if(item)item.classList.remove('dragging');
+  document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above'));
+  dragTaskId=null;
+});
+
+document.addEventListener('dragover',function(e){
+  const item=e.target.closest('.task-item');if(!item||!dragTaskId||item.id===('task-'+dragTaskId))return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above'));
+  const rect=item.getBoundingClientRect();const mid=rect.top+rect.height/2;
+  if(e.clientY<mid){item.classList.add('drag-above');}else{item.classList.add('drag-over');}
+});
+
+document.addEventListener('drop',function(e){
+  const targetItem=e.target.closest('.task-item');if(!targetItem||!dragTaskId){cleanupDrag();return;}
+  e.preventDefault();
+  const targetId=targetItem.id.replace('task-','');if(targetId===dragTaskId){cleanupDrag();return;}
+  const dragIdx=tasks.findIndex(t=>t.id===dragTaskId);const targetIdx=tasks.findIndex(t=>t.id===targetId);
+  if(dragIdx===-1||targetIdx===-1){cleanupDrag();return;}
+  const [moved]=tasks.splice(dragIdx,1);tasks.splice(targetIdx,0,moved);
+  save();render();cleanupDrag();
+});
+
+function cleanupDrag(){document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above','dragging'));dragTaskId=null;}
+
+// ════════════════════════ CALENDAR ════════════════════════
+let calYear,calMonth,calSelectedDate;
+
+function initCalendar(){
+  const now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();
+  calSelectedDate=today();renderCalendar();
+}
+
+function calPrevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function renderCalendar(){
+  document.getElementById('calMonthLabel').textContent=calYear+'年'+(calMonth+1)+'月';
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrevMonth=new Date(calYear,calMonth,0).getDate();
+  const td=today();let html='';
+  // 填充上月末尾
+  for(let i=firstDay-1;i>=0;i--){html+=`<div class="cal-day other-month">${daysInPrevMonth-i}</div>`;}
+  // 本月
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${pad2(calMonth+1)}-${pad2(d)}`;
+    const isToday=ds===td;const isSel=ds===calSelectedDate;
+    const hasTask=tasks.some(t=>t.date===ds||(t.scope==='today'&&t.date===ds));
+    html+=`<div class="cal-day${isToday?' today':''}${hasTask?' has-task':''}${isSel?' selected':''}" onclick="calPickDate('${ds}')">${d}</div>`;
+  }
+  // 填充下月开头
+  const totalCells=firstDay+daysInMonth;const remaining=(7-(totalCells%7))%7;
+  for(let d=1;d<=remaining;d++){html+=`<div class="cal-day other-month">${d}</div>`;}
+  document.getElementById('calGrid').innerHTML=html;
+  calShowTasks();
+}
+
+function calPickDate(ds){
+  calSelectedDate=ds;document.getElementById('taskDateInput').value=ds;targetDate=ds;
+  selScope('today');renderCalendar();
+}
+
+function calShowTasks(){
+  const list=document.getElementById('calTaskList');
+  if(!calSelectedDate){list.innerHTML='<div class="cal-no-tasks">点击日期查看任务</div>';return;}
+  const dayTasks=tasks.filter(t=>(t.date===calSelectedDate||t.scope==='week')&&!t.done);
+  if(dayTasks.length===0){list.innerHTML='<div class="cal-no-tasks">'+calSelectedDate+' 暂无任务</div>';return;}
+  let html='';
+  dayTasks.slice(0,6).forEach(t=>{
+    html+=`<div class="cal-task-item" onclick="document.getElementById('taskDateInput').value='${calSelectedDate}';targetDate='${calSelectedDate}';selScope('today');">
+      <span class="cal-task-dot ${t.priority==='high'?'high':'normal'}"></span>${escHtml(t.text.slice(0,20))}${t.text.length>20?'…':''}
+      ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);margin-left:4px;">本周</span>':''}
+    </div>`;
+  });
+  if(dayTasks.length>6)html+=`<div style="font-size:10px;color:var(--ink3);text-align:center;">还有 ${dayTasks.length-6} 项…</div>`;
+  list.innerHTML=html;
+}
+
+// ════════════════════════ PAGE SWITCH ════════════════════════
+let currentPage='tasks';
+function switchPage(page){
+  currentPage=page;
+  document.getElementById('page1').style.display=page==='tasks'?'':'none';
+  document.getElementById('page2').style.display=page==='calendar'?'':'none';
+  document.getElementById('taskTabs').style.display=page==='tasks'?'':'none';
+  document.getElementById('page-tab-tasks').className='tab'+(page==='tasks'?' on':'');
+  document.getElementById('page-tab-calendar').className='tab'+(page==='calendar'?' on':'');
+  if(page==='calendar'){initCal2();}
+}
+
+// ════════════════════════ CALENDAR PAGE 2 ════════════════════════
+let cal2Year,cal2Month,cal2Sel;
+
+function initCal2(){
+  const now=new Date();cal2Year=now.getFullYear();cal2Month=now.getMonth();
+  cal2Sel=today();renderCal2();
+}
+
+function cal2PrevMonth(){cal2Month--;if(cal2Month<0){cal2Month=11;cal2Year--;}renderCal2();}
+function cal2NextMonth(){cal2Month++;if(cal2Month>11){cal2Month=0;cal2Year++;}renderCal2();}
+function cal2GoToday(){cal2Year=new Date().getFullYear();cal2Month=new Date().getMonth();cal2Sel=today();renderCal2();}
+
+function renderCal2(){
+  document.getElementById('cal2MonthLabel').textContent=cal2Year+'年'+(cal2Month+1)+'月';
+  const firstDay=new Date(cal2Year,cal2Month,1).getDay();
+  const daysInMonth=new Date(cal2Year,cal2Month+1,0).getDate();
+  const daysInPrev=new Date(cal2Year,cal2Month,0).getDate();
+  const td=today();let html='';
+  for(let i=firstDay-1;i>=0;i--){html+=`<div class="cal-page-cell other-month"><span class="cal-page-cell-num">${daysInPrev-i}</span></div>`;}
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${cal2Year}-${pad2(cal2Month+1)}-${pad2(d)}`;const isToday=ds===td;const isSel=ds===cal2Sel;
+    const cellTasks=tasks.filter(t=>(t.date===ds||(t.scope==='today'&&t.date===ds))&&!t.done);
+    let dots='',labels='';
+    cellTasks.slice(0,4).forEach(t=>{dots+=`<span class="cal-page-cell-dot ${t.priority==='high'?'high':'normal'}"></span>`;});
+    cellTasks.slice(0,3).forEach(t=>{labels+=`<div class="cal-page-cell-label">${escHtml(t.text.slice(0,8))}${t.text.length>8?'…':''}</div>`;});
+    html+=`<div class="cal-page-cell${isToday?' today':''}${isSel?' selected':''}" onclick="cal2Pick('${ds}')">
+      <span class="cal-page-cell-num">${d}</span><div class="cal-page-cell-dots">${dots}</div>${labels}
+    </div>`;
+  }
+  const rem=(7-((firstDay+daysInMonth)%7))%7;
+  for(let d=1;d<=rem;d++){html+=`<div class="cal-page-cell other-month"><span class="cal-page-cell-num">${d}</span></div>`;}
+  document.getElementById('cal2Grid').innerHTML=html;
+  cal2ShowDetail();
+}
+
+function cal2Pick(ds){cal2Sel=ds;renderCal2();}
+
+function cal2ShowDetail(){
+  const detail=document.getElementById('cal2Detail');
+  if(!cal2Sel){document.getElementById('cal2DetailDate').textContent='选择日期查看详情';document.getElementById('cal2DetailTasks').innerHTML='';return;}
+  document.getElementById('cal2DetailDate').textContent=cal2Sel+' · '+new Date(cal2Sel).toLocaleDateString('zh-CN',{weekday:'long'});
+  const dayTasks=tasks.filter(t=>(t.date===cal2Sel||t.scope==='week')&&!t.done);
+  if(dayTasks.length===0){document.getElementById('cal2DetailTasks').innerHTML='<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>';}
+  else{
+    let html='';dayTasks.forEach(t=>{html+=`<div class="cal-detail-task" onclick="toggleTask('${t.id}')">
+      <div class="chk${t.done?' on':''}"></div><span style="flex:1;">${escHtml(t.text)}</span>
+      ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);">本周</span>':''}
+      <span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span>
+    </div>`;});
+    document.getElementById('cal2DetailTasks').innerHTML=html;
+  }
+}
+
+function cal2AddTask(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();cal2DoAdd();}}
+function cal2DoAdd(){
+  if(!cal2Sel)return;const v=document.getElementById('cal2AddInput').value;if(!v.trim())return;
+  const t={id:Date.now().toString(),text:v.trim(),done:false,scope:'today',priority:curPri,date:cal2Sel,createdAt:Date.now(),doneAt:null,notes:''};
+  tasks.unshift(t);save();render();renderCal2();document.getElementById('cal2AddInput').value='';
+}
+
+// ════════════════════════ PENGUIN DRAG ════════════════════════
+function initPenguinDrag(){
+  const el=document.getElementById('penguinChar');if(!el)return;
+  let dragging=false,startX,startY,origLeft,origBottom;
+  el.addEventListener('mousedown',function(e){
+    if(e.button!==0)return;e.preventDefault();
+    dragging=true;startX=e.clientX;startY=e.clientY;
+    const style=getComputedStyle(el);
+    origLeft=parseInt(style.left)||(window.innerWidth-130);
+    origBottom=parseInt(style.bottom)||90;
+    el.style.animation='none';el.style.transition='none';
+    el.style.right='auto';el.style.left=origLeft+'px';el.style.bottom=origBottom+'px';
+    document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+  });
+  function onMove(e){
+    if(!dragging)return;
+    el.style.left=(origLeft+(e.clientX-startX))+'px';
+    el.style.bottom=(origBottom-(e.clientY-startY))+'px';
+  }
+  function onUp(){
+    dragging=false;el.style.animation='';el.style.transition='';
+    document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);
+    try{localStorage.setItem('mira_penguin_pos',JSON.stringify({l:parseInt(el.style.left),b:parseInt(el.style.bottom)}));}catch(e){}
+  }
+  // 恢复位置
+  try{const saved=JSON.parse(localStorage.getItem('mira_penguin_pos')||'null');if(saved){el.style.right='auto';el.style.left=saved.l+'px';el.style.bottom=saved.b+'px';el.style.animation='penguinFloat 3.5s ease-in-out infinite';}}catch(e){}
+}
+
+// ════════════════════════ SUPABASE CLOUD SYNC ════════════════════════
+const SB_STORE='mira_supabase';
+let sbClient=null,sbSyncing=false,sbLastSync=null;
+
+function sbInit(){
+  try{const cfg=JSON.parse(localStorage.getItem(SB_STORE)||'null');if(cfg&&cfg.url&&cfg.key){sbClient=supabase.createClient(cfg.url,cfg.key);console.log('☁ Supabase connected');sbPull();}}catch(e){console.log('Supabase not configured');}
+}
+async function sbPull(){
+  if(!sbClient||sbSyncing)return;sbSyncing=true;
+  try{const{data,error}=await sbClient.from('todos').select('*').order('created_at',{ascending:false});if(error)throw error;
+    if(data&&data.length>0){const cloudTasks=data.map(r=>({id:r.id,text:r.text,done:r.done,scope:r.scope||'today',priority:r.priority||'normal',date:r.date||today(),createdAt:new Date(r.created_at).getTime(),doneAt:r.done_at?new Date(r.done_at).getTime():null,notes:r.notes||''}));
+      const merged=sbMerge(tasks,cloudTasks);if(merged.changed){tasks=merged.tasks;save();render();renderCal2();}
+    }
+    sbLastSync=Date.now();console.log('☁ Synced',tasks.length,'tasks');
+  }catch(e){console.error('Sync pull failed:',e);}
+  sbSyncing=false;
+}
+async function sbPush(){
+  if(!sbClient||sbSyncing)return;sbSyncing=true;
+  try{for(const t of tasks){
+    const row={id:t.id,text:t.text,done:t.done,scope:t.scope,priority:t.priority,date:t.date,created_at:new Date(t.createdAt).toISOString(),done_at:t.doneAt?new Date(t.doneAt).toISOString():null,notes:t.notes||'',updated_at:new Date().toISOString()};
+    await sbClient.from('todos').upsert(row,{onConflict:'id'});
+  }sbLastSync=Date.now();console.log('☁ Pushed',tasks.length,'tasks');
+  }catch(e){console.error('Sync push failed:',e);}
+  sbSyncing=false;
+}
+function sbMerge(local,cloud){
+  const cloudMap=new Map(cloud.map(t=>[t.id,t]));let changed=false;
+  const merged=[...local];
+  cloud.forEach(ct=>{if(!local.find(lt=>lt.id===ct.id)){merged.unshift(ct);changed=true;}});
+  return{tasks:merged.filter(t=>t&&t.id),changed};
+}
+// 每次保存后自动推送
+const _origSave=save;save=function(){_origSave();if(sbClient)setTimeout(()=>sbPush(),500);};
+// Supabase 建表 SQL（用户在 Supabase SQL Editor 中执行一次）:
+// CREATE TABLE todos (id TEXT PRIMARY KEY,text TEXT,done BOOLEAN DEFAULT false,scope TEXT DEFAULT 'today',priority TEXT DEFAULT 'normal',date TEXT,created_at TIMESTAMPTZ, done_at TIMESTAMPTZ,notes TEXT DEFAULT '',updated_at TIMESTAMPTZ DEFAULT now());
+
+// ════════════════════════ KEYBOARD SHORTCUTS ════════════════════════
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){const modals=[{el:document.getElementById('otModal'),close:closeOtModal},{el:document.getElementById('editModal'),close:closeEditModal},{el:document.getElementById('pomSettingsModal'),close:closePomSettings},{el:document.getElementById('weatherModal'),close:closeWeatherModal},{el:document.getElementById('themeModal'),close:closeThemeSettings}];for(const m of modals){if(m.el.classList.contains('show')){m.close();e.preventDefault();return;}}if(document.getElementById('chatPanel').classList.contains('show')){toggleChat();e.preventDefault();return;}if(document.activeElement===document.getElementById('searchInput')){document.getElementById('searchInput').blur();}}
+  if(e.key==='/'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();document.getElementById('searchInput').focus();}
+});
+['otModal','editModal','pomSettingsModal','weatherModal','themeModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this){const fns={otModal:closeOtModal,editModal:closeEditModal,pomSettingsModal:closePomSettings,weatherModal:closeWeatherModal,themeModal:closeThemeSettings};fns[id]();}});});
+
+// ════════════════════════ INIT ════════════════════════
+try{
+  load();initDarkMode();initChatResize();initPenguinDrag();initCalendar();sbInit();updateDateBlock();render();pomRenderUI();fetchWeather();
+  if(Notification&&Notification.permission==='default')Notification.requestPermission();
+  otTick=setInterval(updateOT,1000);updateOT();
+  console.log('%c✅ 初始化完成 %c欢迎使用！','color:var(--primary);font-weight:bold;','');
+}catch(e){
+  console.error('初始化失败:',e);
+  document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div>加载出错：'+e.message+'</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';
+}
+</script>
+</body>
+</html>
