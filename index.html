@@ -57,7 +57,7 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .header-inner{max-width:1200px;margin:0 auto;padding:18px 36px 14px;}
 .header-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;}
 .date-block .greeting{font-size:9px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);opacity:.8;}
-.date-block .today-date{font-family:'Noto Serif SC',serif;font-size:24px;font-weight:400;letter-spacing:-.01em;line-height:1.3;color:var(--ink);margin-top:2px;}
+.date-block .today-date{font-family:'Noto Serif SC',serif;font-size:23px;font-weight:400;letter-spacing:-.01em;line-height:1.3;color:var(--ink);margin-top:1px;}
 .header-right{display:flex;align-items:center;gap:12px;}
 .ot-card{background:var(--card);border-radius:var(--radius-lg);padding:11px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;flex-shrink:0;transition:all .25s var(--ease-out);border:1px solid var(--border);cursor:pointer;}
 .ot-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-h);}
@@ -98,10 +98,16 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .add-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);width:38px;height:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease-spring);flex-shrink:0;align-self:flex-end;}
 .add-btn:hover{background:var(--primary-l);transform:scale(1.06);}
 .add-btn:active{transform:scale(.94);}
-.add-opts{display:flex;align-items:center;gap:8px;padding:0 20px 12px;flex-wrap:wrap;}
-.opt-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);}
-.tog-group{display:flex;gap:3px;}
-.tog{font-family:inherit;font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);white-space:nowrap;min-height:26px;}
+.add-opts{display:flex;flex-direction:column;gap:6px;padding:0 20px 12px;}
+.add-opts-row{display:flex;align-items:center;gap:8px;}
+.add-opts-row .opt-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);min-width:40px;}
+.add-opts-row .tog-group{display:flex;gap:3px;}
+.add-opts-row .tog{font-family:inherit;font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);white-space:nowrap;min-height:26px;}
+.add-opts-row .tog:hover{border-color:var(--primary);color:var(--primary);}
+.add-opts-row .tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
+.add-opts-row .tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
+.add-opts-row .tog.on-high{background:var(--accent-xl);border-color:var(--accent);color:var(--accent);}
+.add-opts-row .tog.on-normal{background:transparent;border-color:var(--border);color:var(--ink3);}
 .tog:hover{border-color:var(--primary);color:var(--primary);}
 .tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
 .tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
@@ -448,8 +454,8 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   .header-inner{padding:10px 14px 8px;}
   .header-top{gap:8px;margin-bottom:6px;}
   .header-right{width:100%;justify-content:space-between;gap:6px;}
-  .date-block .greeting{font-size:9px;letter-spacing:.12em;}
-  .date-block .today-date{font-size:17px;}
+  .date-block .greeting{font-size:9px;letter-spacing:.1em;}
+  .date-block .today-date{font-size:16px;line-height:1.2;}
   .prog-wrap{max-width:100px;}.ot-card{gap:6px;padding:6px 10px;font-size:12px;}
   .ot-time{font-size:14px;}.ot-icon{font-size:16px;}
   .ot-edit-tip{display:none;}
@@ -467,15 +473,16 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   /* 日历面板隐藏 */
   #calPanel{display:none !important;}
 
-  /* 添加任务区 */
+  /* 添加任务区 - 移动端逐行排列 */
   .add-card{border-radius:0;border-left:none;border-right:none;}
-  .add-main{padding:4px 4px 4px 14px;}.add-input{font-size:14px;}
-  .add-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 16px 10px;}
+  .add-main{padding:6px 12px;}.add-input{font-size:14px;}
+  .add-opts{display:flex;flex-direction:column;gap:8px;padding:0 16px 12px;}
   .add-opts .sep{display:none;}
-  .add-opts .opt-lbl{font-size:9px;margin-right:2px;}
-  .add-opts .tog-group{flex-wrap:wrap;}
-  .add-opts .tog{font-size:11px;padding:5px 14px;min-height:30px;}
-  .task-date-input{font-size:11px;padding:5px 12px;min-height:30px;width:auto;flex:1;min-width:120px;max-width:160px;}
+  .add-opts-row{display:flex;align-items:center;gap:8px;}
+  .add-opts-row .opt-lbl{font-size:10px;min-width:42px;font-weight:600;color:var(--ink3);}
+  .add-opts-row .tog-group{flex:1;display:flex;gap:4px;}
+  .add-opts-row .tog{flex:1;text-align:center;font-size:12px;padding:6px 8px;min-height:32px;border-radius:6px;}
+  .task-date-input{flex:1;font-size:12px;padding:6px 10px;min-height:32px;border-radius:6px;width:100%;border:1px solid var(--border);background:var(--card);}
 
   /* 任务分组卡片 - 去圆角 */
   .acc-group{border-radius:0;border-left:none;border-right:none;margin-bottom:8px;}
@@ -620,19 +627,23 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         <button class="add-btn" onclick="doAdd()" title="添加">＋</button>
       </div>
       <div class="add-opts">
-        <span class="opt-lbl">范围</span>
-        <div class="tog-group">
-          <button class="tog on-today" id="togToday" onclick="selScope('today')">今天</button>
-          <button class="tog" id="togWeek" onclick="selScope('week')">本周</button>
+        <div class="add-opts-row">
+          <span class="opt-lbl">范围</span>
+          <div class="tog-group">
+            <button class="tog on-today" id="togToday" onclick="selScope('today')">今天</button>
+            <button class="tog" id="togWeek" onclick="selScope('week')">本周</button>
+          </div>
         </div>
-        <div class="sep"></div>
-        <span class="opt-lbl">日期</span>
-        <input type="date" class="task-date-input" id="taskDateInput" onchange="onTaskDateChange()"/>
-        <div class="sep"></div>
-        <span class="opt-lbl">优先级</span>
-        <div class="tog-group">
-          <button class="tog on-high" id="togHigh" onclick="selPri('high')">重要</button>
-          <button class="tog on-normal" id="togNormal" onclick="selPri('normal')">普通</button>
+        <div class="add-opts-row">
+          <span class="opt-lbl">日期</span>
+          <input type="date" class="task-date-input" id="taskDateInput" onchange="onTaskDateChange()"/>
+        </div>
+        <div class="add-opts-row">
+          <span class="opt-lbl">优先级</span>
+          <div class="tog-group">
+            <button class="tog on-high" id="togHigh" onclick="selPri('high')">重要</button>
+            <button class="tog on-normal" id="togNormal" onclick="selPri('normal')">普通</button>
+          </div>
         </div>
       </div>
     </div>
