@@ -389,6 +389,23 @@ html.dark .cal-card{background:rgba(30,30,34,0.4);border:1px solid rgba(255,255,
 .cal-detail-add{display:flex;flex-direction:column;gap:4px;}
 @media(max-width:860px){.cal-page-cell{min-height:60px;padding:2px 4px;}.cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:10px;}}
 
+/* ── SETTINGS PAGE ── */
+.settings-section{margin-bottom:24px;}
+.settings-title{font-family:'Noto Serif SC',serif;font-size:13px;font-weight:500;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.settings-btn{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:4px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:12px;color:var(--ink2);cursor:pointer;transition:all .15s;}
+.settings-btn:hover{background:var(--bg);color:var(--ink);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:12px;color:var(--ink2);}
+.settings-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:4px;}
+.settings-toggle-label{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px;}
+.settings-toggle{appearance:none;-webkit-appearance:none;width:40px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.settings-toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s var(--ease-spring);box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.settings-toggle:checked{background:var(--primary);}
+.settings-toggle:checked::after{transform:translateX(18px);}
+.changelog{font-size:11px;color:var(--ink3);line-height:1.7;}
+.changelog-item{padding:4px 0;border-bottom:1px solid var(--border);}
+.changelog-item span{color:var(--ink2);font-weight:500;margin-right:8px;}
+html.dark .settings-toggle-row{background:var(--card);border-color:var(--border);}
+
 /* ── PENGUIN CHARACTER ── */
 .penguin-char{position:fixed;bottom:90px;right:20px;z-index:590;cursor:pointer;user-select:none;transition:transform .3s var(--ease-spring);animation:penguinFloat 3.5s ease-in-out infinite;}
 .penguin-char:hover{transform:scale(1.12);}
@@ -585,6 +602,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="tab-bar" id="pageSwitcher" style="margin-right:12px;">
         <button class="tab on" onclick="switchPage('tasks')" id="page-tab-tasks">任务</button>
         <button class="tab" onclick="switchPage('calendar')" id="page-tab-calendar">日历</button>
+        <button class="tab" onclick="switchPage('settings')" id="page-tab-settings">设置</button>
       </div>
       <div class="tab-bar" id="taskTabs">
         <button class="tab on" onclick="setTab('active')" id="tab-active">待办</button>
@@ -654,17 +672,17 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 
   <aside class="sidebar">
     <!-- Weather -->
-    <div class="side-card">
+    <div class="side-card" id="weatherCard">
       <div class="side-card-head"><span style="font-size:15px;">☁</span><h3>天气</h3><button onclick="openWeatherModal()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="设置城市">✎</button><button onclick="fetchWeather()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="刷新">↻</button></div>
       <div class="side-card-body" id="weatherBody"><div class="weather-loading">定位中…</div></div>
     </div>
     <!-- Memo -->
-    <div class="side-card memo-card">
+    <div class="side-card memo-card" id="memoCard">
       <div class="side-card-head"><span style="font-size:15px;">📝</span><h3>备忘录</h3></div>
       <div class="side-card-body"><textarea class="memo-textarea" id="memoTextarea" placeholder="随手记点什么…&#10;自动保存" oninput="onMemoChange()"></textarea><div class="memo-indicator" id="memoIndicator">已自动保存</div></div>
     </div>
     <!-- Pomodoro -->
-    <div class="side-card">
+    <div class="side-card" id="pomodoroCard">
       <div class="side-card-head"><span style="font-size:15px;">🍅</span><h3>番茄钟</h3><button class="pom-settings-btn" onclick="openPomSettings()" title="设置">⚙</button><span id="pomSessionLabel" style="font-size:10px;color:var(--ink3);"></span></div>
       <div class="side-card-body">
         <div class="pom-ring-wrap">
@@ -676,7 +694,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       </div>
     </div>
     <!-- Ambient Sound -->
-    <div class="side-card">
+    <div class="side-card" id="ambientCard">
       <div class="side-card-head"><span style="font-size:15px;">🎧</span><h3>氛围音</h3></div>
       <div class="side-card-body">
         <div class="ambient-sounds" id="ambientSounds">
@@ -713,6 +731,46 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         <textarea class="add-input" id="cal2AddInput" placeholder="添加任务到这一天…（Shift+Enter 换行）" rows="1" onkeydown="cal2AddTask(event)" oninput="autoResizeAdd(this)" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;width:100%;font-size:13px;"></textarea>
         <button class="pom-btn" onclick="cal2DoAdd()" style="margin-top:6px;">添加</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: SETTINGS -->
+<div id="page3" style="display:none;max-width:700px;margin:0 auto;padding:28px 28px 80px;">
+  <div class="settings-section">
+    <h3 class="settings-title">功能开关</h3>
+    <div class="settings-toggles" id="settingsToggles"></div>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">外观</h3>
+    <button class="settings-btn" onclick="openThemeSettings()">🎨 主题配色</button>
+    <button class="settings-btn" onclick="toggleDarkMode()">🌓 暗色模式</button>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">同步</h3>
+    <div class="settings-row"><span>☁ Supabase</span><span id="sbStatus" style="font-size:10px;color:var(--ink3);">未连接</span></div>
+    <button class="settings-btn" onclick="openThemeSettings()">⚙ 配置 Supabase</button>
+    <button class="settings-btn" onclick="sbPull()">🔄 手动同步</button>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">时间</h3>
+    <button class="settings-btn" onclick="openOtModal()">🕗 下班时间</button>
+    <button class="settings-btn" onclick="openPomSettings()">🍅 番茄钟设置</button>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">数据</h3>
+    <button class="settings-btn" onclick="exportData()">📤 导出数据</button>
+    <button class="settings-btn" onclick="document.getElementById('importInput').click()">📥 导入数据</button>
+    <button class="settings-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button>
+    <button class="settings-btn" onclick="if(confirm('确定要清除所有本地数据？云端数据不受影响。')){localStorage.removeItem(STORE);tasks=[];save();render();}">🗑 清除本地数据</button>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">更新日志</h3>
+    <div class="changelog">
+      <div class="changelog-item"><span>2026-05-29</span> 设置页上线 · 功能开关 · 移动端重设计 · 暗色模式</div>
+      <div class="changelog-item"><span>2026-05-28</span> 日历页面 · 企鹅角色 · 毛玻璃质感 · Supabase 云同步 · Netlify 部署</div>
+      <div class="changelog-item"><span>2026-05-27</span> POSTALCO 和风单色设计 · 15 套配色 · 氛围音 · 番茄钟自动循环 · 拖拽排序</div>
+      <div class="changelog-item"><span>2026-05-26</span> 项目初始化 · 任务管理 · 天气面板 · 番茄钟 · AI 助手</div>
     </div>
   </div>
 </div>
@@ -1392,16 +1450,51 @@ function calShowTasks(){
   list.innerHTML=html;
 }
 
+// ════════════════════════ FEATURE TOGGLES ════════════════════════
+const FEATURES=[
+  {id:'showWeather',label:'🌤 天气面板',def:true},
+  {id:'showMemo',label:'📝 备忘录',def:true},
+  {id:'showPomodoro',label:'🍅 番茄钟',def:true},
+  {id:'showAmbient',label:'🎧 氛围音',def:true},
+  {id:'showChat',label:'✦ AI 助手',def:true},
+  {id:'showPenguin',label:'🐧 咕咕嘎嘎',def:true},
+  {id:'showCalSidebar',label:'📅 侧边日历',def:true},
+  {id:'showWeeklies',label:'📌 本周待办',def:true},
+];
+function getFeature(id){try{const v=localStorage.getItem('feat_'+id);return v===null?FEATURES.find(f=>f.id===id).def:v==='1';}catch(e){return true;}}
+function setFeature(id,on){localStorage.setItem('feat_'+id,on?'1':'0');applyFeatures();}
+function applyFeatures(){
+  const els={
+    showWeather:document.getElementById('weatherCard'),showMemo:document.getElementById('memoCard'),
+    showPomodoro:document.getElementById('pomodoroCard'),showAmbient:document.getElementById('ambientCard'),
+    showChat:document.getElementById('fab'),showPenguin:document.getElementById('penguinChar'),
+    showCalSidebar:document.getElementById('calPanel'),
+  };
+  Object.entries(els).forEach(([id,el])=>{if(el)el.style.display=getFeature(id)?'':'none';});
+  showWeeklies=getFeature('showWeeklies');
+}
+function renderSettingsToggles(){
+  let html='';
+  FEATURES.forEach(f=>{html+=`<div class="settings-toggle-row"><span class="settings-toggle-label">${f.label}</span><input type="checkbox" class="settings-toggle" ${getFeature(f.id)?'checked':''} onchange="setFeature('${f.id}',this.checked)"/></div>`;});
+  document.getElementById('settingsToggles').innerHTML=html;
+}
+function updateSbStatus(){
+  const el=document.getElementById('sbStatus');if(!el)return;
+  if(sbClient){el.textContent='✅ 已连接 · '+tasks.length+' 条任务';el.style.color='var(--primary)';}
+  else{el.textContent='⚪ 未配置';}
+}
+
 // ════════════════════════ PAGE SWITCH ════════════════════════
 let currentPage='tasks';
 function switchPage(page){
   currentPage=page;
   document.getElementById('page1').style.display=page==='tasks'?'':'none';
   document.getElementById('page2').style.display=page==='calendar'?'':'none';
+  document.getElementById('page3').style.display=page==='settings'?'':'none';
   document.getElementById('taskTabs').style.display=page==='tasks'?'':'none';
-  document.getElementById('page-tab-tasks').className='tab'+(page==='tasks'?' on':'');
-  document.getElementById('page-tab-calendar').className='tab'+(page==='calendar'?' on':'');
+  ['tasks','calendar','settings'].forEach(p=>{document.getElementById('page-tab-'+p).className='tab'+(page===p?' on':'');});
   if(page==='calendar'){initCal2();}
+  if(page==='settings'){renderSettingsToggles();updateSbStatus();}
 }
 
 // ════════════════════════ CALENDAR PAGE 2 ════════════════════════
@@ -1562,6 +1655,7 @@ try{
   safeInit('calendar',initCalendar);
   try{sbInit();}catch(e){console.log('Supabase init deferred:',e.message);}
   safeInit('dateBlock',updateDateBlock);
+  safeInit('features',applyFeatures);
   safeInit('render',render);
   safeInit('pomodoro',pomRenderUI);
   safeInit('weather',fetchWeather);
