@@ -86,7 +86,7 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 /* ── LAYOUT ── */
 .page-body{max-width:1300px;margin:0 auto;padding:28px 28px 80px;display:grid;grid-template-columns:270px 1fr 330px;gap:22px;align-items:start;}
 @media(max-width:1150px){.page-body{grid-template-columns:1fr 300px;gap:20px;padding:24px 20px 80px;}#calPanel{display:none;}}
-@media(max-width:860px){.page-body{grid-template-columns:1fr;gap:18px;padding:18px 14px 80px;}.sidebar{order:-1;}}
+@media(max-width:860px){.page-body{grid-template-columns:1fr;gap:16px;padding:14px 14px 100px;}.sidebar{order:0;}}
 .left-col{display:flex;flex-direction:column;gap:24px;}
 
 /* ── ADD TASK ── */
@@ -439,17 +439,50 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 .chat-suggest-btn:hover{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
 
 /* ═══════════════════════════════════════════ MOBILE ═══════════════════════════════════════════ */
-@media(max-width:600px){
-  .header-inner{padding:12px 14px 10px;}
-  .header-top{flex-wrap:wrap;gap:8px;margin-bottom:8px;}
-  .header-right{width:100%;}
-  .prog-wrap{max-width:120px;}
-  .ot-card{padding:7px 10px;}.ot-time{font-size:14px;}
-  .page-body{padding:16px 14px 80px;}
-  .chat-panel{right:8px;left:8px;width:auto;bottom:80px;}
-  .fab{bottom:20px;right:20px;width:44px;height:44px;font-size:16px;}
-  .add-opts,.add-main{padding-left:12px;padding-right:12px;}
-  .theme-modal-box,.weather-modal-box{width:calc(100vw - 28px);padding:20px;}
+@media(max-width:860px){
+  .page-body{grid-template-columns:1fr;gap:16px;padding:14px 14px 100px;}
+  .sidebar{order:0;position:static;gap:12px;}
+  .sidebar .side-card{max-width:100%;}
+  .header-inner{padding:10px 12px 8px;}
+  .header-top{flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .header-right{width:100%;flex-wrap:wrap;gap:8px;}
+  .header-bottom{flex-wrap:wrap;gap:6px;}
+  .prog-wrap{max-width:130px;}.ot-card{padding:6px 10px;}.ot-time{font-size:15px;}
+  .tab-bar{flex:1;min-width:fit-content;}
+  .search-wrap{margin-left:0;margin-right:auto;}
+  .search-input{width:100px;font-size:11px;}
+  .search-input:focus{width:150px;}
+  .search-hint{display:none;}
+  .header-settings-row{margin-left:0;}
+  .add-opts{flex-wrap:wrap;gap:6px;padding:0 10px 10px;}
+  .add-main{padding:6px 4px 6px 12px;}.add-input{font-size:14px;}
+  .chat-panel{right:4px;left:4px;width:auto;bottom:72px;max-height:60vh;}
+  .fab{bottom:16px;right:16px;width:42px;height:42px;font-size:15px;}
+  .theme-modal-box,.weather-modal-box{width:calc(100vw - 24px);padding:18px;}
+  #calPanel{display:none !important;}
+  .cal-page-wrap{padding:0 4px;}
+  .cal-page-cell{min-height:50px;padding:2px;}
+  .cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:10px;}
+  .cal-page-title{font-size:18px;}
+  .weekly-toggle{font-size:11px;}
+  .acc-head-inner{padding:0 14px;height:46px;}
+  .acc-title{font-size:14px;}
+  .task-text-row{font-size:12px;line-height:1.5;}
+  .task-main-row{padding:8px 8px 8px 8px;}
+  .task-actions{opacity:1;} /* 移动端始终显示操作按钮 */
+  .date-block .today-date{font-size:18px;}
+  .cal-page-container{padding:14px 12px 80px !important;}
+}
+@media(max-width:400px){
+  .header-inner{padding:8px 10px 6px;}
+  .page-body{padding:10px 8px 100px;}
+  .add-input{font-size:13px;}
+  .tab{font-size:10px;padding:4px 10px;min-height:26px;}
+  .penguin-char img{width:70px;}.penguin-char{bottom:60px;right:6px;}
+  .chat-panel{bottom:60px;max-height:55vh;}
+  .fab{bottom:12px;right:12px;width:38px;height:38px;font-size:14px;}
+  .ot-card{padding:5px 8px;}.ot-time{font-size:13px;}
+  .ot-icon{font-size:16px;}
 }
 </style>
 </head>
@@ -578,7 +611,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 </div>
 
 <!-- PAGE 2: CALENDAR -->
-<div id="page2" style="display:none;max-width:900px;margin:0 auto;padding:28px 28px 80px;">
+<div id="page2" style="display:none;max-width:900px;margin:0 auto;padding:28px 28px 80px;" class="cal-page-container">
   <div class="cal-page-wrap">
     <div class="cal-page-head">
       <button class="cal-nav-btn" onclick="cal2PrevMonth()">◂</button>
