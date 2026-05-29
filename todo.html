@@ -1385,7 +1385,7 @@ function sbInit(){
 }
 async function sbPull(){
   if(!sbClient||sbSyncing)return;sbSyncing=true;
-  try{const{data,error}=await sbClient.from('todos').select('*').order('created_at',{ascending:false});if(error)throw error;
+  try{const{data,error}=await sbClient.from('todos').select('*').eq('device_key',sbDeviceKey).order('created_at',{ascending:false});if(error)throw error;
     if(data&&data.length>0){const cloudTasks=data.map(r=>({id:r.id,text:r.text,done:r.done,scope:r.scope||'today',priority:r.priority||'normal',date:r.date||today(),createdAt:new Date(r.created_at).getTime(),doneAt:r.done_at?new Date(r.done_at).getTime():null,notes:r.notes||''}));
       const merged=sbMerge(tasks,cloudTasks);if(merged.changed){tasks=merged.tasks;save();render();renderCal2();}
     }
