@@ -1369,10 +1369,19 @@ function initPenguinDrag(){
 
 // ════════════════════════ SUPABASE CLOUD SYNC ════════════════════════
 const SB_STORE='mira_supabase';
-let sbClient=null,sbSyncing=false,sbLastSync=null;
+let sbClient=null,sbSyncing=false,sbLastSync=null,sbDeviceKey=null;
+
+function sbGetDeviceKey(){
+  let key=localStorage.getItem('mira_device_key');
+  if(!key){key='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('mira_device_key',key);}
+  return key;
+}
 
 function sbInit(){
-  try{const cfg=JSON.parse(localStorage.getItem(SB_STORE)||'null');if(cfg&&cfg.url&&cfg.key){sbClient=supabase.createClient(cfg.url,cfg.key);console.log('☁ Supabase connected');sbPull();}}catch(e){console.log('Supabase not configured');}
+  sbDeviceKey=sbGetDeviceKey();
+  try{const cfg=JSON.parse(localStorage.getItem(SB_STORE)||'null');if(cfg&&cfg.url&&cfg.key){
+    sbClient=supabase.createClient(cfg.url,cfg.key,{global:{headers:{'x-device-key':sbDeviceKey}}});console.log('☁ Supabase connected');sbPull();}
+  }catch(e){console.log('Supabase not configured');}
 }
 async function sbPull(){
   if(!sbClient||sbSyncing)return;sbSyncing=true;
@@ -1387,7 +1396,7 @@ async function sbPull(){
 async function sbPush(){
   if(!sbClient||sbSyncing)return;sbSyncing=true;
   try{for(const t of tasks){
-    const row={id:t.id,text:t.text,done:t.done,scope:t.scope,priority:t.priority,date:t.date,created_at:new Date(t.createdAt).toISOString(),done_at:t.doneAt?new Date(t.doneAt).toISOString():null,notes:t.notes||'',updated_at:new Date().toISOString()};
+    const row={id:t.id,text:t.text,done:t.done,scope:t.scope,priority:t.priority,date:t.date,device_key:sbDeviceKey,created_at:new Date(t.createdAt).toISOString(),done_at:t.doneAt?new Date(t.doneAt).toISOString():null,notes:t.notes||'',updated_at:new Date().toISOString()};
     await sbClient.from('todos').upsert(row,{onConflict:'id'});
   }sbLastSync=Date.now();console.log('☁ Pushed',tasks.length,'tasks');
   }catch(e){console.error('Sync push failed:',e);}
