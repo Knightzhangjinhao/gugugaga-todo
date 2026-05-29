@@ -1553,9 +1553,17 @@ document.addEventListener('keydown',function(e){
 
 // ════════════════════════ INIT ════════════════════════
 try{
-  load();initDarkMode();initChatResize();initPenguinDrag();initCalendar();
+  load();
+  function safeInit(name,fn){try{fn();}catch(e){console.error('Init error ('+name+'):',e.message);}}
+  safeInit('darkMode',initDarkMode);
+  safeInit('chatResize',initChatResize);
+  safeInit('penguinDrag',initPenguinDrag);
+  safeInit('calendar',initCalendar);
   try{sbInit();}catch(e){console.log('Supabase init deferred:',e.message);}
-  updateDateBlock();render();pomRenderUI();fetchWeather();
+  safeInit('dateBlock',updateDateBlock);
+  safeInit('render',render);
+  safeInit('pomodoro',pomRenderUI);
+  safeInit('weather',fetchWeather);
   if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
   if(Notification&&Notification.permission==='default')Notification.requestPermission();
   otTick=setInterval(updateOT,1000);updateOT();
