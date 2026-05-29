@@ -901,7 +901,7 @@ function render(){
     html+=`</div></div></div></div></div>`;
   });
 
-  if(!html)html='<div class="empty"><div class="empty-icon">'+(searchTerm?'🔍':'✦')+'</div><div>'+(searchTerm?'没有匹配的任务':'咕嘎～ 还没有任务，在上方写点什么吧')+'</div>'+(searchTerm?'':'<div class="export-row"><button class="export-btn" onclick="exportData()">📤 导出</button><button class="export-btn" onclick="document.getElementById(\'importInput\').click()">📥 导入</button><input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/></div>')+'</div>';
+  if(!html)html='<div class="empty"><div class="empty-icon">'+(searchTerm?'🔍':'✦')+'</div><div>'+(searchTerm?'没有匹配的任务':'咕嘎～ 快添加一个任务试试叭')+'</div>'+(searchTerm?'':'<div class="export-row"><button class="export-btn" onclick="exportData()">📤 导出</button><button class="export-btn" onclick="document.getElementById(\'importInput\').click()">📥 导入</button><input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)"/></div>')+'</div>';
   wrap.innerHTML=html;updatePomStats();renderCalendar();
 }
 
@@ -1570,7 +1570,7 @@ try{
   console.log('%c✅ 初始化完成','color:var(--primary);font-weight:bold;');
 }catch(e){
   console.error('初始化失败:',e);
-  try{document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">🐧</div><div>咕嘎…加载出错了：'+e.message.slice(0,30)+'</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';}catch(_){}
+  try{document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">🐧</div><div>咕嘎…加载出错了～ 快添加一个任务试试叭</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';}catch(_){}
 }
 </script>
 </body>
