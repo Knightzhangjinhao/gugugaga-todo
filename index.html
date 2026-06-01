@@ -938,7 +938,7 @@ function updateOT(){const now=new Date(),end=new Date();end.setHours(otHour,otMi
 function updateUrgency(diff,pend){const el=document.getElementById('urgency'),inner=document.getElementById('urgencyInner');if(diff==='off'||diff>7200){el.classList.remove('show');return;}el.classList.add('show');if(diff<3600){inner.className='urgency-inner lvl-urgent';inner.innerHTML='🔥 距下班不足1小时，还有 <b>'+pend+'</b> 项未完成，全力冲刺！';}else{inner.className='urgency-inner lvl-warn';inner.innerHTML='⚡ 距下班约 '+Math.floor(diff/3600)+'小时，还有 <b>'+pend+'</b> 项今日任务，加油！';}}
 
 // ════════════════════════ RENDER ════════════════════════
-function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active')return!t.done;if(curTab==='done')return t.done;return true;});}
+function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active'){if(!t.done)return true;if(t.done&&t.date===today())return true;return false;}if(curTab==='done')return t.done;return true;});}
 function groupTasks(list){const groups={};list.forEach(t=>{let g;if(t.scope==='week'){g='week';}else if(t.date&&t.date!=='week'){g=t.date;}else{g=t.date||'unknown';}if(!groups[g])groups[g]=[];groups[g].push(t);});return groups;}
 
 function render(){
@@ -956,7 +956,7 @@ function render(){
   // 按日期分组
   const sortedDates=Object.keys(groups).sort((a,b)=>b.localeCompare(a)); // 最新在前
   sortedDates.forEach(d=>{
-    const items=groups[d];const doneC=items.filter(x=>x.done).length;
+    const items=groups[d];items.sort((a,b)=>a.done===b.done?0:a.done?1:-1);const doneC=items.filter(x=>x.done).length;
     const label=d===today()?'今天':d===yesterday()?'昨天':formatDate(d);
     html+=`<div class="acc-group open" id="grp-${d}">
       <div class="acc-head-inner" onclick="toggleAcc('grp-${d}')">
@@ -1395,6 +1395,12 @@ document.addEventListener('drop',function(e){
   const targetItem=e.target.closest('.task-item');if(!targetItem||!dragTaskId){cleanupDrag();return;}
   e.preventDefault();
   const targetId=targetItem.id.replace('task-','');if(targetId===dragTaskId){cleanupDrag();return;}
+  const dragTask=tasks.find(t=>t.id===dragTaskId);const targetTask=tasks.find(t=>t.id===targetId);
+  // 本周任务拖到今日区域 → 转为今日任务
+  if(dragTask&&targetTask&&dragTask.scope==='week'&&targetTask.scope==='today'&&targetTask.date===today()){
+    dragTask.scope='today';dragTask.date=today();dragTask.createdAt=Date.now();
+    save();render();cleanupDrag();return;
+  }
   const dragIdx=tasks.findIndex(t=>t.id===dragTaskId);const targetIdx=tasks.findIndex(t=>t.id===targetId);
   if(dragIdx===-1||targetIdx===-1){cleanupDrag();return;}
   const [moved]=tasks.splice(dragIdx,1);tasks.splice(targetIdx,0,moved);
