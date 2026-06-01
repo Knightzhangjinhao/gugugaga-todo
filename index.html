@@ -98,16 +98,20 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .add-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);width:38px;height:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s var(--ease-spring);flex-shrink:0;align-self:flex-end;}
 .add-btn:hover{background:var(--primary-l);transform:scale(1.06);}
 .add-btn:active{transform:scale(.94);}
-.add-opts{display:flex;flex-direction:column;gap:6px;padding:0 20px 12px;}
-.add-opts-row{display:flex;align-items:center;gap:8px;}
-.add-opts-row .opt-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);min-width:40px;}
+/* 桌面端：单行排列，与添加框融为一体 */
+.add-opts{display:flex;align-items:center;gap:8px;padding:0 20px 12px;flex-wrap:wrap;}
+.add-opts-row{display:contents;}
+.add-opts-row .opt-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-right:2px;}
 .add-opts-row .tog-group{display:flex;gap:3px;}
-.add-opts-row .tog{font-family:inherit;font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);white-space:nowrap;min-height:26px;}
+.add-opts-row .tog{font-family:inherit;font-size:11px;font-weight:500;padding:4px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--ink3);cursor:pointer;transition:all .15s var(--ease-out);white-space:nowrap;min-height:26px;}
 .add-opts-row .tog:hover{border-color:var(--primary);color:var(--primary);}
 .add-opts-row .tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
 .add-opts-row .tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
 .add-opts-row .tog.on-high{background:var(--accent-xl);border-color:var(--accent);color:var(--accent);}
 .add-opts-row .tog.on-normal{background:transparent;border-color:var(--border);color:var(--ink3);}
+/* 日期输入与添加框统一 */
+.add-opts-row .task-date-input{border:1px solid var(--border);border-radius:10px;padding:4px 10px;font-family:inherit;font-size:11px;color:var(--ink);background:var(--card);outline:none;cursor:pointer;transition:border-color .15s;min-width:120px;min-height:26px;}
+.add-opts-row .task-date-input:focus{border-color:var(--primary);}
 .tog:hover{border-color:var(--primary);color:var(--primary);}
 .tog.on-today{background:var(--primary-xl);border-color:var(--primary);color:var(--primary);}
 .tog.on-week{background:#ece9e2;border-color:var(--ink3);color:var(--ink2);}
@@ -938,7 +942,7 @@ function updateOT(){const now=new Date(),end=new Date();end.setHours(otHour,otMi
 function updateUrgency(diff,pend){const el=document.getElementById('urgency'),inner=document.getElementById('urgencyInner');if(diff==='off'||diff>7200){el.classList.remove('show');return;}el.classList.add('show');if(diff<3600){inner.className='urgency-inner lvl-urgent';inner.innerHTML='🔥 距下班不足1小时，还有 <b>'+pend+'</b> 项未完成，全力冲刺！';}else{inner.className='urgency-inner lvl-warn';inner.innerHTML='⚡ 距下班约 '+Math.floor(diff/3600)+'小时，还有 <b>'+pend+'</b> 项今日任务，加油！';}}
 
 // ════════════════════════ RENDER ════════════════════════
-function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active'){if(!t.done)return true;if(t.done&&t.date===today())return true;return false;}if(curTab==='done')return t.done;return true;});}
+function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active'){if(!t.done)return true;if(getFeature('showCompletedInActive')&&t.done&&t.date===today())return true;return false;}if(curTab==='done')return t.done;return true;});}
 function groupTasks(list){const groups={};list.forEach(t=>{let g;if(t.scope==='week'){g='week';}else if(t.date&&t.date!=='week'){g=t.date;}else{g=t.date||'unknown';}if(!groups[g])groups[g]=[];groups[g].push(t);});return groups;}
 
 function render(){
@@ -1396,10 +1400,17 @@ document.addEventListener('drop',function(e){
   e.preventDefault();
   const targetId=targetItem.id.replace('task-','');if(targetId===dragTaskId){cleanupDrag();return;}
   const dragTask=tasks.find(t=>t.id===dragTaskId);const targetTask=tasks.find(t=>t.id===targetId);
-  // 本周任务拖到今日区域 → 转为今日任务
-  if(dragTask&&targetTask&&dragTask.scope==='week'&&targetTask.scope==='today'&&targetTask.date===today()){
-    dragTask.scope='today';dragTask.date=today();dragTask.createdAt=Date.now();
-    save();render();cleanupDrag();return;
+  if(dragTask&&targetTask){
+    // 本周 → 今日
+    if(dragTask.scope==='week'&&targetTask.scope==='today'&&targetTask.date===today()){
+      dragTask.scope='today';dragTask.date=today();dragTask.createdAt=Date.now();
+      save();render();cleanupDrag();return;
+    }
+    // 今日 → 本周
+    if(dragTask.scope==='today'&&targetTask.scope==='week'){
+      dragTask.scope='week';dragTask.date='week';dragTask.createdAt=Date.now();
+      save();render();cleanupDrag();return;
+    }
   }
   const dragIdx=tasks.findIndex(t=>t.id===dragTaskId);const targetIdx=tasks.findIndex(t=>t.id===targetId);
   if(dragIdx===-1||targetIdx===-1){cleanupDrag();return;}
@@ -1473,6 +1484,7 @@ const FEATURES=[
   {id:'showPenguin',label:'🐧 咕咕嘎嘎',def:true},
   {id:'showCalSidebar',label:'📅 侧边日历',def:true},
   {id:'showWeeklies',label:'📌 本周待办',def:true},
+  {id:'showCompletedInActive',label:'✅ 完成可见（已完成保留在待办中）',def:true},
 ];
 function getFeature(id){try{const v=localStorage.getItem('feat_'+id);return v===null?FEATURES.find(f=>f.id===id).def:v==='1';}catch(e){return true;}}
 function setFeature(id,on){localStorage.setItem('feat_'+id,on?'1':'0');applyFeatures();}
