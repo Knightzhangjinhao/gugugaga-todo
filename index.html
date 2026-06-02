@@ -500,13 +500,13 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   /* 添加任务区 - 移动端逐行排列 */
   .add-card{border-radius:0;border-left:none;border-right:none;}
   .add-main{padding:6px 12px;}.add-input{font-size:14px;}
-  .add-opts{display:flex;flex-direction:column;gap:8px;padding:0 16px 12px;}
+  .add-opts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:4px 14px 10px;}
   .add-opts .sep{display:none;}
-  .add-opts-row{display:flex;align-items:center;gap:8px;}
-  .add-opts-row .opt-lbl{font-size:10px;min-width:42px;font-weight:600;color:var(--ink3);}
-  .add-opts-row .tog-group{flex:1;display:flex;gap:4px;}
-  .add-opts-row .tog{flex:1;text-align:center;font-size:12px;padding:6px 8px;min-height:32px;border-radius:6px;}
-  .task-date-input{flex:1;font-size:12px;padding:6px 10px;min-height:32px;border-radius:6px;width:100%;border:1px solid var(--border);background:var(--card);}
+  .add-opts-row{display:contents;}
+  .add-opts-row .opt-lbl{font-size:9px;font-weight:500;color:var(--ink3);margin-right:4px;}
+  .add-opts-row .tog-group{display:flex;gap:4px;flex:1;}
+  .add-opts-row .tog{flex:1;text-align:center;font-size:11px;padding:5px 10px;min-height:28px;border-radius:6px;}
+  .task-date-input{font-size:11px;padding:5px 10px;min-height:28px;border-radius:6px;width:130px;border:1px solid var(--border);background:var(--card);}
 
   /* 任务分组卡片 - 去圆角 */
   .acc-group{border-radius:0;border-left:none;border-right:none;margin-bottom:8px;}
