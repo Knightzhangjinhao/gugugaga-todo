@@ -286,6 +286,22 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .pom-btn.secondary:hover{background:var(--border);}
 .pom-stats{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);background:var(--bg);border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:6px;}
 .pom-stats span b{color:var(--ink);font-weight:600;}
+.week-stats{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);background:var(--accent-xl);border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:6px;}
+.week-stats span b{color:var(--ink);font-weight:600;}
+.shortcut-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 8px;transition:all .15s;font-weight:700;}
+.shortcut-btn:hover{color:var(--ink);border-color:var(--ink3);}
+.shortcut-modal{position:fixed;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(4px);z-index:900;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out);}
+.shortcut-modal.show{opacity:1;pointer-events:all;}
+.shortcut-box{background:var(--card);border-radius:var(--radius-lg);padding:24px;border:1px solid var(--border);max-width:380px;width:calc(100vw - 40px);}
+.shortcut-box h3{font-family:'Noto Serif SC',serif;font-size:15px;font-weight:500;color:var(--ink);margin-bottom:16px;}
+.shortcut-box kbd{display:inline-block;padding:2px 7px;background:var(--bg);border:1px solid var(--border);border-radius:3px;font-family:monospace;font-size:10px;color:var(--ink2);margin:0 2px;}
+.shortcut-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:11px;color:var(--ink2);border-bottom:1px solid var(--border);}
+.shortcut-row:last-child{border-bottom:none;}
+.template-btns{display:flex;gap:4px;flex-wrap:wrap;padding:0 20px 6px;}
+.template-btn{font-family:inherit;font-size:10px;font-weight:500;padding:3px 10px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--ink3);cursor:pointer;transition:all .12s;white-space:nowrap;}
+.template-btn:hover{border-color:var(--accent);color:var(--accent);}
+.task-item.swiping-r{transform:translateX(60px);opacity:.3;transition:transform .2s;}
+.task-item.swiping-l{transform:translateX(-60px);background:rgba(180,100,80,.1);transition:transform .2s;}
 .pom-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 3px;border-radius:3px;transition:all .15s;}
 .pom-settings-btn:hover{color:var(--primary);}
 .pom-range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -624,6 +640,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       </div>
       <span class="search-hint">按 / 快速搜索</span>
       <div class="header-settings-row">
+        <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.add('show')" title="快捷键">?</button>
         <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换暗色模式">☼</button>
         <button class="theme-settings-btn" onclick="openThemeSettings()">🎨 主题</button>
       </div>
@@ -653,6 +670,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         <textarea class="add-input" id="addInput" placeholder="写点什么… 按 Enter 添加，Shift+Enter 换行" maxlength="500" rows="1" onkeydown="handleAddKey(event)" oninput="autoResizeAdd(this)"></textarea>
         <button class="add-btn" onclick="doAdd()" title="添加">＋</button>
       </div>
+      <div class="template-btns" id="templateBtns"></div>
       <div class="add-opts">
         <div class="add-opts-row">
           <span class="opt-lbl">范围</span>
@@ -699,6 +717,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         </div>
         <div class="pom-controls"><button class="pom-btn" id="pomStartBtn" onclick="pomToggle()">开始</button><button class="pom-btn secondary" onclick="pomReset()">重置</button></div>
         <div class="pom-stats"><span>今日番茄 <b id="pomCount">0</b></span><span>专注时长 <b id="pomFocusMin">0</b> min</span></div>
+        <div class="week-stats"><span>本周完成 <b id="weekDone">0</b></span><span>总任务 <b id="weekTotal">0</b></span></div>
       </div>
     </div>
     <!-- Ambient Sound -->
@@ -822,6 +841,20 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 <div class="theme-field" style="margin-top:14px;"><div class="theme-field-lbl">☁ Supabase 云同步</div><input type="text" class="theme-url-input" id="supabaseUrl" placeholder="Supabase URL（https://xxx.supabase.co）" style="margin-bottom:6px;"/><input type="text" class="theme-url-input" id="supabaseKey" placeholder="anon key（eyJhbG...）"/><div class="weather-city-hint">注册 <b>supabase.com</b> → 创建项目 → Settings → API → 复制 URL 和 anon key → 粘贴到这里</div></div>
 <div style="display:flex;gap:8px;margin-top:18px;"><button class="modal-btn secondary" onclick="resetTheme()">恢复默认</button><button class="modal-btn primary" onclick="closeThemeSettings()">完成</button></div>
 </div></div>
+<!-- Shortcut Modal -->
+<div class="shortcut-modal" id="shortcutModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="shortcut-box">
+    <h3>⌨ 快捷键</h3>
+    <div class="shortcut-row"><span>聚焦搜索框</span><span><kbd>/</kbd></span></div>
+    <div class="shortcut-row"><span>关闭弹窗 / 取消</span><span><kbd>Esc</kbd></span></div>
+    <div class="shortcut-row"><span>快速添加任务</span><span><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span></div>
+    <div class="shortcut-row"><span>搜索中清除</span><span><kbd>Esc</kbd></span></div>
+    <div class="shortcut-row"><span>拖拽任务排序</span><span>按住拖拽</span></div>
+    <div class="shortcut-row"><span>拖拽本周→今日</span><span>拖到今日区域</span></div>
+    <div style="margin-top:12px;text-align:center;"><button class="pom-btn secondary" onclick="document.getElementById('shortcutModal').classList.remove('show')">关闭</button></div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-wrap"><div class="toast" id="toast"><span id="toastMsg"></span><button class="toast-undo" id="toastUndo" onclick="undoDelete()">撤销</button></div></div>
 <!-- AI Chat -->
@@ -1001,7 +1034,14 @@ function renderTaskCompact(t){
 
 function toggleAcc(id){const el=document.getElementById(id);if(!el)return;el.classList.toggle('open');}
 function toggleWeeklies(){showWeeklies=!showWeeklies;render();}
-function updateProgress(){const todayTasks=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today());const done=tasks.filter(t=>t.done&&t.scope==='today'&&t.date===today()).length;const total=todayTasks.length+done;const pct=total?Math.round(done/total*100):0;document.getElementById('progFill').style.width=pct+'%';document.getElementById('progPct').textContent=pct+'%';}
+function updateProgress(){const todayTasks=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today());const done=tasks.filter(t=>t.done&&t.scope==='today'&&t.date===today()).length;const total=todayTasks.length+done;const pct=total?Math.round(done/total*100):0;document.getElementById('progFill').style.width=pct+'%';document.getElementById('progPct').textContent=pct+'%';updateWeekStats();}
+function updateWeekStats(){
+  const ws=thisWeekStart();const td=today();
+  const weekTasks=tasks.filter(t=>t.date>=ws&&t.date<=td&&t.scope!=='week');
+  const done=weekTasks.filter(t=>t.done).length;
+  document.getElementById('weekDone').textContent=done;
+  document.getElementById('weekTotal').textContent=weekTasks.length;
+}
 
 // ════════════════════════ EXPORT/IMPORT ════════════════════════
 function exportData(){
@@ -1421,6 +1461,31 @@ document.addEventListener('drop',function(e){
 
 function cleanupDrag(){document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above','dragging'));dragTaskId=null;}
 
+// ════════════════════════ TASK TEMPLATES ════════════════════════
+const TEMPLATES=[
+  {label:'开周会',text:'开运营周会'},
+  {label:'写邮件',text:'写邮件'},
+  {label:'回复数据',text:'登记/回复数据'},
+  {label:'写文案',text:'写文案'},
+  {label:'检查社媒',text:'检查社媒定时情况'},
+  {label:'写活动方案',text:'写游戏内活动方案'},
+];
+function renderTemplates(){
+  let html='';TEMPLATES.forEach(t=>{html+=`<button class="template-btn" onclick="insertTemplate('${t.text}')">${t.label}</button>`;});
+  document.getElementById('templateBtns').innerHTML=html;
+}
+function insertTemplate(text){const el=document.getElementById('addInput');el.value=text;el.focus();el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ════════════════════════ MOBILE SWIPE ════════════════════════
+let swipeStartX=0,swipeStartY=0,swipeTaskId=null;
+document.addEventListener('touchstart',function(e){const item=e.target.closest('.task-item');if(!item)return;swipeTaskId=item.id.replace('task-','');swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(!swipeTaskId)return;const dx=(e.changedTouches[0]?.clientX||0)-swipeStartX;const dy=(e.changedTouches[0]?.clientY||0)-swipeStartY;
+  if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx)){swipeTaskId=null;return;}
+  if(dx>0){toggleTask(swipeTaskId);}else{deleteTask(swipeTaskId);}
+  swipeTaskId=null;
+});
+
 // ════════════════════════ CALENDAR ════════════════════════
 let calYear,calMonth,calSelectedDate;
 
@@ -1683,6 +1748,7 @@ try{
   safeInit('dateBlock',updateDateBlock);
   safeInit('features',applyFeatures);
   safeInit('render',render);
+  renderTemplates();
   safeInit('pomodoro',pomRenderUI);
   safeInit('weather',fetchWeather);
   if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
