@@ -976,7 +976,7 @@ function doAdd(){
 }
 
 // ════════════════════════ TASK CRUD ════════════════════════
-function toggleTask(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;t.doneAt=t.done?Date.now():null;save();render();}
+function toggleTask(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;t.doneAt=t.done?Date.now():null;save();render();renderCal2();}
 function deleteTask(id){if(pendingDelete)commitDelete();const task=tasks.find(t=>t.id===id);if(!task)return;pendingDelete={id:id,timeout:setTimeout(()=>commitDelete(),3500)};showToast('已删除「'+task.text.slice(0,18)+(task.text.length>18?'…':'')+'」');render();}
 function commitDelete(){if(!pendingDelete)return;tasks=tasks.filter(t=>t.id!==pendingDelete.id);clearTimeout(pendingDelete.timeout);pendingDelete=null;save();render();hideToast();}
 function undoDelete(){if(!pendingDelete)return;clearTimeout(pendingDelete.timeout);pendingDelete=null;save();render();hideToast();}
@@ -1718,10 +1718,12 @@ function cal2ShowDetail(){
   const dayTasks=allDay.filter(t=>!t.done);
   if(dayTasks.length===0){document.getElementById('cal2DetailTasks').innerHTML=allDay.length===0?'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>':'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">🎉 全部完成！</div>';}
   else{
-    let html='';dayTasks.forEach(t=>{html+=`<div class="cal-detail-task" onclick="toggleTask('${t.id}')">
-      <div class="chk${t.done?' on':''}"></div><span style="flex:1;">${escHtml(t.text)}</span>
+    let html='';dayTasks.forEach(t=>{html+=`<div class="cal-detail-task">
+      <div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}')" style="cursor:pointer;"></div>
+      <span style="flex:1;cursor:pointer;" onclick="openEditModal('${t.id}')" title="点击编辑">${escHtml(t.text)}</span>
       ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);">本周</span>':''}
       <span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span>
+      <button class="act-btn del" onclick="deleteTask('${t.id}')" title="删除" style="opacity:0.6;">✕</button>
     </div>`;});
     document.getElementById('cal2DetailTasks').innerHTML=html;
   }
