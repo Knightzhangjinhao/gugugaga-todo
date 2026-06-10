@@ -797,28 +797,17 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 <!-- Theme Modal -->
 <div class="theme-modal-overlay" id="themeModal"><div class="theme-modal-box"><div class="theme-modal-title">自定义主题</div>
 <div class="theme-field"><div class="theme-field-lbl">🎨 预设主题</div><div class="theme-presets" id="themePresets">
-<button class="theme-preset on" data-theme="wabisabi" style="background:linear-gradient(135deg,#1a1a18,#6b6560)" title="墨灰"></button>
-<button class="theme-preset" data-theme="warm" style="background:linear-gradient(135deg,#3a3028,#7b6b5a)" title="暖灰"></button>
-<button class="theme-preset" data-theme="cool" style="background:linear-gradient(135deg,#222830,#6b7278)" title="冷灰"></button>
-<button class="theme-preset" data-theme="sumi" style="background:linear-gradient(135deg,#1a1a18,#4a4a46)" title="纯粹"></button>
+<div style="font-size:10px;font-weight:500;color:var(--ink3);margin-bottom:6px;">墨色 · Monochrome</div>
+<button class="theme-preset on" data-theme="sumi" style="background:linear-gradient(135deg,#1a1a18,#6b6560)" title="墨色"></button>
 <button class="theme-preset" data-theme="paper" style="background:linear-gradient(135deg,#2a2820,#8b8270)" title="纸色"></button>
+<button class="theme-preset" data-theme="slate" style="background:linear-gradient(135deg,#242830,#6b7278)" title="岩灰"></button>
 <button class="theme-preset" data-theme="sepia" style="background:linear-gradient(135deg,#3a3228,#7b6a50)" title="茶色"></button>
-<button class="theme-preset" data-theme="stone" style="background:linear-gradient(135deg,#2c2c28,#888078)" title="石色"></button>
-<button class="theme-preset" data-theme="olive" style="background:linear-gradient(135deg,#2a2a20,#6b6b50)" title="橄榄"></button>
-<button class="theme-preset" data-theme="plum" style="background:linear-gradient(135deg,#28222a,#7b6b80)" title="梅子"></button>
-<button class="theme-preset" data-theme="slate" style="background:linear-gradient(135deg,#242830,#5a6878)" title="岩灰"></button>
-<button class="theme-preset" data-theme="cedar" style="background:linear-gradient(135deg,#2a2218,#8b6a50)" title="杉色"></button>
-<button class="theme-preset" data-theme="moss" style="background:linear-gradient(135deg,#222820,#6b7a5a)" title="苔色"></button>
-<button class="theme-preset" data-theme="ash" style="background:linear-gradient(135deg,#262626,#6a6a6a)" title="灰烬"></button>
-<button class="theme-preset" data-theme="bone" style="background:linear-gradient(135deg,#282420,#8b7a60)" title="骨白"></button>
-<button class="theme-preset" data-theme="mist" style="background:linear-gradient(135deg,#222428,#7a8288)" title="雾色"></button>
-<div style="width:100%;height:1px;background:var(--border);margin:4px 0;"></div>
+<div style="font-size:10px;font-weight:500;color:var(--ink3);margin:8px 0 6px;">雨夜 · Rainy Night</div>
 <button class="theme-preset" data-theme="rainstreak" style="background:linear-gradient(135deg,#7388A2,#95A5B4)" title="雨痕"></button>
 <button class="theme-preset" data-theme="streetlamp" style="background:linear-gradient(135deg,#7E8793,#C78953)" title="路灯"></button>
 <button class="theme-preset" data-theme="nightfog" style="background:linear-gradient(135deg,#596781,#B96E62)" title="夜雾"></button>
-<div style="width:100%;height:1px;background:var(--border);margin:4px 0;"></div>
+<div style="font-size:10px;font-weight:500;color:var(--ink3);margin:8px 0 6px;">果晶 · Glass Fruit</div>
 <button class="theme-preset" data-theme="greengrape" style="background:linear-gradient(135deg,#7BA858,#C8E8A0)" title="青提"></button>
-<button class="theme-preset" data-theme="plumviolet" style="background:linear-gradient(135deg,#9082E2,#D0C4FA)" title="梅紫"></button>
 <button class="theme-preset" data-theme="seasalt" style="background:linear-gradient(135deg,#6EC4B4,#98D8F0)" title="海盐"></button>
 <button class="theme-preset" data-theme="lychee" style="background:linear-gradient(135deg,#F0B8C0,#FDE0E4)" title="荔枝"></button>
 </div></div>
@@ -1311,32 +1300,21 @@ function currentThemeData(){return{primary:document.getElementById('themePrimary
 
 // ════════════════════════ THEME SETTINGS ════════════════════════
 const THEME_PRESETS={
-  wabisabi:{primary:'#1a1a18',accent:'#6b6560'},
-  warm:{primary:'#3a3028',accent:'#7b6b5a'},
-  cool:{primary:'#222830',accent:'#6b7278'},
-  sumi:{primary:'#1a1a18',accent:'#4a4a46'},
+  // ══ 墨色 · Monochrome ══
+  sumi:{primary:'#1a1a18',accent:'#6b6560'},
   paper:{primary:'#2a2820',accent:'#8b8270'},
+  slate:{primary:'#242830',accent:'#6b7278'},
   sepia:{primary:'#3a3228',accent:'#7b6a50'},
-  stone:{primary:'#2c2c28',accent:'#888078'},
-  olive:{primary:'#2a2a20',accent:'#6b6b50'},
-  plum:{primary:'#28222a',accent:'#7b6b80'},
-  slate:{primary:'#242830',accent:'#5a6878'},
-  cedar:{primary:'#2a2218',accent:'#8b6a50'},
-  moss:{primary:'#222820',accent:'#6b7a5a'},
-  ash:{primary:'#262626',accent:'#6a6a6a'},
-  bone:{primary:'#282420',accent:'#8b7a60'},
-  mist:{primary:'#222428',accent:'#7a8288'},
-  // ══ 雨夜系列 · Rainy Night ══
+  // ══ 雨夜 · Rainy Night ══
   rainstreak:{primary:'#7388A2',accent:'#95A5B4'},
   streetlamp:{primary:'#7E8793',accent:'#C78953'},
   nightfog:{primary:'#596781',accent:'#B96E62'},
-  // ══ 果晶系列 · Glass Fruit ══
+  // ══ 果晶 · Glass Fruit ══
   greengrape:{primary:'#7BA858',accent:'#C8E8A0'},
-  plumviolet:{primary:'#9082E2',accent:'#D0C4FA'},
   seasalt:{primary:'#6EC4B4',accent:'#98D8F0'},
   lychee:{primary:'#F0B8C0',accent:'#FDE0E4'},
 };
-let currentTheme='wabisabi';
+let currentTheme='sumi';
 
 function openThemeSettings(){
   document.getElementById('themePrimaryColor').value=currentThemeData().primary;
@@ -1359,7 +1337,7 @@ function applyThemeColors(p,a){const pL=lightenHex(p,0.2),pXL=lightenHex(p,0.55)
 function updateBodyBgTexture(p,a){const style=document.getElementById('dynamic-body-bg');if(style)style.remove();const s=document.createElement('style');s.id='dynamic-body-bg';s.textContent='body::before{background:radial-gradient(ellipse at 20% 0%,'+hexToRgba(p,0.025)+' 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,'+hexToRgba(a,0.02)+' 0%,transparent 60%);opacity:0.8;}';document.head.appendChild(s);}
 function applyTheme(theme){currentTheme=theme.name||'custom';applyThemeColors(theme.primary,theme.accent);if(theme.headerBgDataUrl){document.documentElement.style.setProperty('--header-bg-image','url('+theme.headerBgDataUrl+')');document.querySelector('.site-header').classList.toggle('has-bg',true);}else if(theme.headerBg){document.documentElement.style.setProperty('--header-bg-image','url('+theme.headerBg+')');document.querySelector('.site-header').classList.toggle('has-bg',!!theme.headerBg);}else{document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');}}
 function saveTheme(){const theme={name:currentTheme,primary:currentThemeData().primary,accent:currentThemeData().accent,headerBg:document.getElementById('themeHeaderBg').value.trim()};const existing=JSON.parse(localStorage.getItem(THEME_STORE)||'{}');if(existing.headerBgDataUrl)theme.headerBgDataUrl=existing.headerBgDataUrl;localStorage.setItem(THEME_STORE,JSON.stringify(theme));}
-function resetTheme(){const t=THEME_PRESETS.wabisabi;currentTheme='wabisabi';document.getElementById('themePrimaryColor').value=t.primary;document.getElementById('themeAccentColor').value=t.accent;document.getElementById('themePrimaryHex').textContent=t.primary;document.getElementById('themeAccentHex').textContent=t.accent;document.getElementById('themeHeaderBg').value='';applyThemeColors(t.primary,t.accent);document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');localStorage.setItem(THEME_STORE,JSON.stringify({name:'wabisabi',primary:t.primary,accent:t.accent,headerBg:''}));document.querySelectorAll('#themePresets .theme-preset').forEach(b=>b.classList.toggle('on',b.dataset.theme==='wabisabi'));closeThemeSettings();}
+function resetTheme(){const t=THEME_PRESETS.sumi;currentTheme='sumi';document.getElementById('themePrimaryColor').value=t.primary;document.getElementById('themeAccentColor').value=t.accent;document.getElementById('themePrimaryHex').textContent=t.primary;document.getElementById('themeAccentHex').textContent=t.accent;document.getElementById('themeHeaderBg').value='';applyThemeColors(t.primary,t.accent);document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');localStorage.setItem(THEME_STORE,JSON.stringify({name:'sumi',primary:t.primary,accent:t.accent,headerBg:''}));document.querySelectorAll('#themePresets .theme-preset').forEach(b=>b.classList.toggle('on',b.dataset.theme==='sumi'));closeThemeSettings();}
 document.getElementById('themePresets').addEventListener('click',function(e){const btn=e.target.closest('.theme-preset');if(!btn)return;const name=btn.dataset.theme;const t=THEME_PRESETS[name];if(!t)return;currentTheme=name;document.getElementById('themePrimaryColor').value=t.primary;document.getElementById('themeAccentColor').value=t.accent;document.getElementById('themePrimaryHex').textContent=t.primary;document.getElementById('themeAccentHex').textContent=t.accent;document.getElementById('themeHeaderBg').value='';applyThemeColors(t.primary,t.accent);document.documentElement.style.setProperty('--header-bg-image','none');document.querySelector('.site-header').classList.remove('has-bg');saveTheme();document.querySelectorAll('#themePresets .theme-preset').forEach(b=>b.classList.toggle('on',b===btn));});
 
 // ════════════════════════ COLOR UTILS ════════════════════════
