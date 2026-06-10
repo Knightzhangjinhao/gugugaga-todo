@@ -662,6 +662,10 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-task-list" id="calTaskList"><div class="cal-no-tasks">点击日期查看任务</div></div>
     </div>
+    <div class="side-card" id="weatherCard">
+      <div class="side-card-head"><span style="font-size:15px;">☁</span><h3>天气</h3><button onclick="openWeatherModal()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="设置城市">✎</button><button onclick="fetchWeather()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="刷新">↻</button></div>
+      <div class="side-card-body" id="weatherBody"><div class="weather-loading">定位中…</div></div>
+    </div>
   </div>
   <div class="left-col">
     <!-- Add Task -->
@@ -697,16 +701,6 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   </div>
 
   <aside class="sidebar">
-    <!-- Weather -->
-    <div class="side-card" id="weatherCard">
-      <div class="side-card-head"><span style="font-size:15px;">☁</span><h3>天气</h3><button onclick="openWeatherModal()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="设置城市">✎</button><button onclick="fetchWeather()" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:12px;padding:2px 3px;border-radius:3px;" title="刷新">↻</button></div>
-      <div class="side-card-body" id="weatherBody"><div class="weather-loading">定位中…</div></div>
-    </div>
-    <!-- Memo -->
-    <div class="side-card memo-card" id="memoCard">
-      <div class="side-card-head"><span style="font-size:15px;">📝</span><h3>备忘录</h3></div>
-      <div class="side-card-body"><textarea class="memo-textarea" id="memoTextarea" placeholder="随手记点什么…&#10;自动保存" oninput="onMemoChange()"></textarea><div class="memo-indicator" id="memoIndicator">已自动保存</div></div>
-    </div>
     <!-- Pomodoro -->
     <div class="side-card" id="pomodoroCard">
       <div class="side-card-head"><span style="font-size:15px;">🍅</span><h3>番茄钟</h3><button class="pom-settings-btn" onclick="openPomSettings()" title="设置">⚙</button><span id="pomSessionLabel" style="font-size:10px;color:var(--ink3);"></span></div>
@@ -719,6 +713,11 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         <div class="pom-stats"><span>今日番茄 <b id="pomCount">0</b></span><span>专注时长 <b id="pomFocusMin">0</b> min</span></div>
         <div class="week-stats"><span>本周完成 <b id="weekDone">0</b></span><span>总任务 <b id="weekTotal">0</b></span></div>
       </div>
+    </div>
+    <!-- Memo -->
+    <div class="side-card memo-card" id="memoCard">
+      <div class="side-card-head"><span style="font-size:15px;">📝</span><h3>备忘录</h3></div>
+      <div class="side-card-body"><textarea class="memo-textarea" id="memoTextarea" placeholder="随手记点什么…&#10;自动保存" oninput="onMemoChange()"></textarea><div class="memo-indicator" id="memoIndicator">已自动保存</div></div>
     </div>
     <!-- Ambient Sound -->
     <div class="side-card" id="ambientCard">
