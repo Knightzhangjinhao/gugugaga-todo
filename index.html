@@ -300,6 +300,10 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .template-btns{display:flex;gap:4px;flex-wrap:wrap;padding:0 20px 6px;}
 .template-btn{font-family:inherit;font-size:10px;font-weight:500;padding:3px 10px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--ink3);cursor:pointer;transition:all .12s;white-space:nowrap;}
 .template-btn:hover{border-color:var(--accent);color:var(--accent);}
+.template-add{border-style:dashed;opacity:.6;}
+.template-add:hover{opacity:1;}
+.template-del{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:10px;padding:0 2px;opacity:.4;transition:opacity .12s;}
+.template-del:hover{opacity:1;color:var(--accent);}
 .task-item.swiping-r{transform:translateX(60px);opacity:.3;transition:transform .2s;}
 .task-item.swiping-l{transform:translateX(-60px);background:rgba(180,100,80,.1);transition:transform .2s;}
 .pom-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 3px;border-radius:3px;transition:all .15s;}
@@ -1461,18 +1465,25 @@ document.addEventListener('drop',function(e){
 function cleanupDrag(){document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above','dragging'));dragTaskId=null;}
 
 // ════════════════════════ TASK TEMPLATES ════════════════════════
-const TEMPLATES=[
-  {label:'开周会',text:'开运营周会'},
-  {label:'写邮件',text:'写邮件'},
-  {label:'回复数据',text:'登记/回复数据'},
-  {label:'写文案',text:'写文案'},
-  {label:'检查社媒',text:'检查社媒定时情况'},
-  {label:'写活动方案',text:'写游戏内活动方案'},
-];
+const TMPL_STORE='mira_templates';
+let userTemplates=[];
+function loadTemplates(){try{userTemplates=JSON.parse(localStorage.getItem(TMPL_STORE)||'[]');}catch(e){userTemplates=[];}if(userTemplates.length===0&&!localStorage.getItem(TMPL_STORE)){userTemplates=[{label:'开周会',text:'开运营周会'},{label:'写邮件',text:'写邮件'},{label:'写文案',text:'写文案'},{label:'写活动方案',text:'写游戏内活动方案'}];saveTemplates();}}
+function saveTemplates(){localStorage.setItem(TMPL_STORE,JSON.stringify(userTemplates));}
 function renderTemplates(){
-  let html='';TEMPLATES.forEach(t=>{html+=`<button class="template-btn" onclick="insertTemplate('${t.text}')">${t.label}</button>`;});
+  let html='';
+  userTemplates.forEach((t,i)=>{html+=`<button class="template-btn" onclick="insertTemplate('${t.text.replace(/'/g,"\\'")}')">${t.label}</button><button class="template-del" onclick="removeTemplate(${i})" title="删除">×</button>`;});
+  html+=`<button class="template-btn template-add" onclick="addTemplate()" title="添加常用模板">+ 模板</button>`;
   document.getElementById('templateBtns').innerHTML=html;
 }
+function addTemplate(){
+  const text=prompt('输入模板内容（任务文字）：');
+  if(!text||!text.trim())return;
+  const label=prompt('输入模板名称（简短标签）：',text.slice(0,6));
+  if(!label||!label.trim())return;
+  userTemplates.push({label:label.trim(),text:text.trim()});
+  saveTemplates();renderTemplates();
+}
+function removeTemplate(i){userTemplates.splice(i,1);saveTemplates();renderTemplates();}
 function insertTemplate(text){const el=document.getElementById('addInput');el.value=text;el.focus();el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
 // ════════════════════════ MOBILE SWIPE ════════════════════════
@@ -1746,6 +1757,7 @@ try{
   try{sbInit();}catch(e){console.log('Supabase init deferred:',e.message);}
   safeInit('dateBlock',updateDateBlock);
   safeInit('features',applyFeatures);
+  loadTemplates();
   safeInit('render',render);
   renderTemplates();
   safeInit('pomodoro',pomRenderUI);
