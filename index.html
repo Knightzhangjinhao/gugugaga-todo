@@ -306,6 +306,7 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .template-del:hover{opacity:1;color:var(--accent);}
 .task-item.swiping-r{transform:translateX(60px);opacity:.3;transition:transform .2s;}
 .task-item.swiping-l{transform:translateX(-60px);background:rgba(180,100,80,.1);transition:transform .2s;}
+.recur-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:4px;}
 .pom-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 3px;border-radius:3px;transition:all .15s;}
 .pom-settings-btn:hover{color:var(--primary);}
 .pom-range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -678,7 +679,6 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
         <textarea class="add-input" id="addInput" placeholder="写点什么… 按 Enter 添加，Shift+Enter 换行" maxlength="500" rows="1" onkeydown="handleAddKey(event)" oninput="autoResizeAdd(this)"></textarea>
         <button class="add-btn" onclick="doAdd()" title="添加">＋</button>
       </div>
-      <div class="template-btns" id="templateBtns"></div>
       <div class="add-opts">
         <div class="add-opts-row">
           <span class="opt-lbl">范围</span>
@@ -775,6 +775,12 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
     <h3 class="settings-title">外观</h3>
     <button class="settings-btn" onclick="openThemeSettings()">🎨 主题配色</button>
     <button class="settings-btn" onclick="toggleDarkMode()">🌓 暗色模式</button>
+  </div>
+  <div class="settings-section">
+    <h3 class="settings-title">循环任务</h3>
+    <div id="recurringList" style="margin-bottom:8px;"></div>
+    <button class="settings-btn" onclick="addRecurring()" style="border-style:dashed;">+ 添加循环任务</button>
+    <div style="font-size:10px;color:var(--ink3);margin-top:6px;">每日首次打开页面时自动添加到今日待办。未完成的任务不会消失。</div>
   </div>
   <div class="settings-section">
     <h3 class="settings-title">同步</h3>
@@ -1464,27 +1470,48 @@ document.addEventListener('drop',function(e){
 
 function cleanupDrag(){document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','drag-above','dragging'));dragTaskId=null;}
 
-// ════════════════════════ TASK TEMPLATES ════════════════════════
-const TMPL_STORE='mira_templates';
-let userTemplates=[];
-function loadTemplates(){try{userTemplates=JSON.parse(localStorage.getItem(TMPL_STORE)||'[]');}catch(e){userTemplates=[];}if(userTemplates.length===0&&!localStorage.getItem(TMPL_STORE)){userTemplates=[{label:'开周会',text:'开运营周会'},{label:'写邮件',text:'写邮件'},{label:'写文案',text:'写文案'},{label:'写活动方案',text:'写游戏内活动方案'}];saveTemplates();}}
-function saveTemplates(){localStorage.setItem(TMPL_STORE,JSON.stringify(userTemplates));}
-function renderTemplates(){
+// ════════════════════════ RECURRING TASKS ════════════════════════
+const RECUR_STORE='mira_recurring';const RECUR_DATE='mira_recurring_date';
+const DAY_NAMES=['周日','周一','周二','周三','周四','周五','周六'];
+let recurringTasks=[];
+function loadRecurring(){try{recurringTasks=JSON.parse(localStorage.getItem(RECUR_STORE)||'[]');}catch(e){recurringTasks=[];}}
+function saveRecurring(){localStorage.setItem(RECUR_STORE,JSON.stringify(recurringTasks));}
+function autoAddRecurring(){
+  loadRecurring();if(recurringTasks.length===0)return;
+  const td=today();const lastDate=localStorage.getItem(RECUR_DATE);
+  if(lastDate===td)return; // 今天已添加过
+  const dow=new Date().getDay(); // 0=Sun
+  let added=0;
+  recurringTasks.forEach(rt=>{
+    if(rt.days.includes(dow)){
+      // 检查今天是否已经有这个循环任务了
+      const exists=tasks.some(t=>t.text===rt.text&&t.date===td&&t.scope==='today');
+      if(!exists){addTask(rt.text,'today',rt.priority||'normal','');added++;}
+    }
+  });
+  if(added>0){localStorage.setItem(RECUR_DATE,td);console.log('🔄 自动添加 '+added+' 条循环任务');}
+}
+function renderRecurringManager(){
   let html='';
-  userTemplates.forEach((t,i)=>{html+=`<button class="template-btn" onclick="insertTemplate('${t.text.replace(/'/g,"\\'")}')">${t.label}</button><button class="template-del" onclick="removeTemplate(${i})" title="删除">×</button>`;});
-  html+=`<button class="template-btn template-add" onclick="addTemplate()" title="添加常用模板">+ 模板</button>`;
-  document.getElementById('templateBtns').innerHTML=html;
+  recurringTasks.forEach((rt,i)=>{
+    const daysStr=rt.days.map(d=>DAY_NAMES[d]).join('·');
+    html+=`<div class="recur-row"><div style="flex:1;"><span style="font-size:12px;color:var(--ink2);">${rt.text}</span><br><span style="font-size:10px;color:var(--ink3);">${daysStr} · ${rt.priority==='high'?'重要':'普通'}</span></div><button class="template-del" onclick="recurringTasks.splice(${i},1);saveRecurring();renderRecurringManager();">×</button></div>`;
+  });
+  if(!html)html='<div style="font-size:11px;color:var(--ink3);padding:6px 0;">暂无循环任务</div>';
+  document.getElementById('recurringList').innerHTML=html;
 }
-function addTemplate(){
-  const text=prompt('输入模板内容（任务文字）：');
-  if(!text||!text.trim())return;
-  const label=prompt('输入模板名称（简短标签）：',text.slice(0,6));
-  if(!label||!label.trim())return;
-  userTemplates.push({label:label.trim(),text:text.trim()});
-  saveTemplates();renderTemplates();
+function addRecurring(){
+  const text=prompt('输入任务内容：');if(!text||!text.trim())return;
+  const pri=confirm('设为「重要」优先级？')?'high':'normal';
+  let daysStr=prompt('选择生效日期（用逗号分隔，如 1,2,3,4,5 表示周一到周五）：\n0=周日 1=周一 2=周二 3=周三 4=周四 5=周五 6=周六\n快捷：输入 w 表示工作日（周一至周五）');
+  if(!daysStr)return;
+  let days;
+  if(daysStr.trim().toLowerCase()==='w'){days=[1,2,3,4,5];}
+  else{try{days=daysStr.split(',').map(s=>parseInt(s.trim())).filter(d=>d>=0&&d<=6);}catch(e){days=[1,2,3,4,5];}}
+  if(days.length===0)return;
+  recurringTasks.push({id:Date.now().toString(),text:text.trim(),priority:pri,days:days});
+  saveRecurring();renderRecurringManager();
 }
-function removeTemplate(i){userTemplates.splice(i,1);saveTemplates();renderTemplates();}
-function insertTemplate(text){const el=document.getElementById('addInput');el.value=text;el.focus();el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
 // ════════════════════════ MOBILE SWIPE ════════════════════════
 let swipeStartX=0,swipeStartY=0,swipeTaskId=null;
@@ -1595,7 +1622,7 @@ function switchPage(page){
   document.getElementById('taskTabs').style.display=page==='tasks'?'':'none';
   ['tasks','calendar','settings'].forEach(p=>{document.getElementById('page-tab-'+p).className='tab'+(page===p?' on':'');});
   if(page==='calendar'){initCal2();}
-  if(page==='settings'){renderSettingsToggles();updateSbStatus();}
+  if(page==='settings'){renderSettingsToggles();renderRecurringManager();updateSbStatus();}
 }
 
 // ════════════════════════ CALENDAR PAGE 2 ════════════════════════
@@ -1757,9 +1784,8 @@ try{
   try{sbInit();}catch(e){console.log('Supabase init deferred:',e.message);}
   safeInit('dateBlock',updateDateBlock);
   safeInit('features',applyFeatures);
-  loadTemplates();
   safeInit('render',render);
-  renderTemplates();
+  safeInit('recurring',autoAddRecurring);
   safeInit('pomodoro',pomRenderUI);
   safeInit('weather',fetchWeather);
   if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}
