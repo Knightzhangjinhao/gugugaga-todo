@@ -421,6 +421,16 @@ html.dark .cal-card{background:rgba(30,30,34,0.4);border:1px solid rgba(255,255,
 .cal-detail-task .chk{width:16px;height:16px;}
 .cal-detail-add{display:flex;flex-direction:column;gap:4px;}
 @media(max-width:860px){.cal-page-cell{min-height:60px;padding:4px;}.cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:11px;}.cal-page-title{font-size:20px;}}
+.day-modal-box{background:var(--card);border-radius:var(--radius-lg);padding:24px;border:1px solid var(--border);width:500px;max-width:calc(100vw - 20px);max-height:80vh;overflow-y:auto;}
+.day-modal-title{font-family:'Noto Serif SC',serif;font-size:20px;font-weight:400;color:var(--ink);}
+.day-modal-stats{display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:var(--ink3);}
+.day-modal-stats b{color:var(--ink);font-weight:600;}
+.day-modal-tasks{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:50vh;overflow-y:auto;}
+.day-modal-task{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:12px;color:var(--ink2);border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;border:1px solid var(--border);background:var(--bg);}
+.day-modal-task:hover{border-color:var(--ink3);}
+.day-modal-task .chk{width:18px;height:18px;}
+.day-modal-task .del-btn{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:13px;padding:2px 4px;opacity:.4;transition:opacity .12s;}
+.day-modal-task:hover .del-btn{opacity:1;color:var(--accent);}
 
 /* ── SETTINGS PAGE ── */
 .settings-section{margin-bottom:24px;}
@@ -760,14 +770,11 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
     </div>
     <div class="cal-page-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
     <div class="cal-page-grid" id="cal2Grid"></div>
-    <div class="cal-page-detail" id="cal2Detail">
+    <div class="cal-page-detail" id="cal2Detail" onclick="if(cal2Sel)cal2OpenDay()" style="cursor:pointer;">
       <div class="cal-detail-date" id="cal2DetailDate">选择日期查看详情</div>
       <div class="cal-detail-stats" id="cal2DetailStats"></div>
       <div class="cal-detail-tasks" id="cal2DetailTasks"></div>
-      <div class="cal-detail-add">
-        <textarea class="add-input" id="cal2AddInput" placeholder="添加任务到这一天…（Shift+Enter 换行）" rows="1" onkeydown="cal2AddTask(event)" oninput="autoResizeAdd(this)" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;width:100%;font-size:13px;"></textarea>
-        <button class="pom-btn" onclick="cal2DoAdd()" style="margin-top:6px;">添加</button>
-      </div>
+      <div style="font-size:10px;color:var(--ink3);text-align:center;padding:4px 0;">点击展开完整视图 →</div>
     </div>
   </div>
 </div>
@@ -872,6 +879,22 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 <div class="theme-field" style="margin-top:14px;"><div class="theme-field-lbl">☁ Supabase 云同步</div><input type="text" class="theme-url-input" id="supabaseUrl" placeholder="Supabase URL（https://xxx.supabase.co）" style="margin-bottom:6px;"/><input type="text" class="theme-url-input" id="supabaseKey" placeholder="anon key（eyJhbG...）"/><div class="weather-city-hint">注册 <b>supabase.com</b> → 创建项目 → Settings → API → 复制 URL 和 anon key → 粘贴到这里</div></div>
 <div style="display:flex;gap:8px;margin-top:18px;"><button class="modal-btn secondary" onclick="resetTheme()">恢复默认</button><button class="modal-btn primary" onclick="closeThemeSettings()">完成</button></div>
 </div></div>
+<!-- Day Detail Modal -->
+<div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeDayModal()">
+  <div class="day-modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="day-modal-title" id="dayModalTitle"></div>
+      <button class="chat-close" onclick="closeDayModal()" style="background:var(--bg);color:var(--ink2);">✕</button>
+    </div>
+    <div class="day-modal-stats" id="dayModalStats"></div>
+    <div class="day-modal-tasks" id="dayModalTasks"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <textarea class="add-input" id="dayModalInput" placeholder="添加任务…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();dayModalAdd();}" oninput="autoResizeAdd(this)" style="flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-family:inherit;font-size:13px;background:var(--bg);"></textarea>
+      <button class="pom-btn" onclick="dayModalAdd()" style="flex-shrink:0;">添加</button>
+    </div>
+  </div>
+</div>
+
 <!-- Shortcut Modal -->
 <div class="shortcut-modal" id="shortcutModal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="shortcut-box">
@@ -1707,33 +1730,51 @@ function renderCal2(){
 }
 function cal2QuickAdd(ds){cal2Sel=ds;renderCal2();document.getElementById('cal2AddInput').focus();}
 
-function cal2Pick(ds){cal2Sel=ds;renderCal2();}
+function cal2Pick(ds){cal2Sel=ds;renderCal2();cal2OpenDay();}
 
 function cal2ShowDetail(){
-  if(!cal2Sel){document.getElementById('cal2DetailDate').textContent='选择日期查看详情';document.getElementById('cal2DetailTasks').innerHTML='';return;}
+  if(!cal2Sel){document.getElementById('cal2DetailDate').textContent='选择日期查看详情';document.getElementById('cal2DetailStats').innerHTML='';document.getElementById('cal2DetailTasks').innerHTML='';return;}
   const allDay=tasks.filter(t=>t.date===cal2Sel||(t.scope==='today'&&t.date===cal2Sel));
   const done=allDay.filter(t=>t.done).length;const total=allDay.length;
   document.getElementById('cal2DetailDate').textContent=cal2Sel+' · '+new Date(cal2Sel).toLocaleDateString('zh-CN',{weekday:'long'});
   document.getElementById('cal2DetailStats').innerHTML=total>0?`<span>总任务 <b>${total}</b></span><span>已完成 <b>${done}</b></span><span>待办 <b>${total-done}</b></span>`:'';
-  const dayTasks=allDay.filter(t=>!t.done);
-  if(dayTasks.length===0){document.getElementById('cal2DetailTasks').innerHTML=allDay.length===0?'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>':'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">🎉 全部完成！</div>';}
+  const undone=allDay.filter(t=>!t.done);
+  if(undone.length===0){document.getElementById('cal2DetailTasks').innerHTML=allDay.length===0?'<div style="color:var(--ink3);font-size:11px;padding:4px 0;">暂无任务</div>':'<div style="color:var(--ink3);font-size:11px;padding:4px 0;">🎉 全部完成！</div>';}
   else{
-    let html='';dayTasks.forEach(t=>{html+=`<div class="cal-detail-task">
-      <div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}')" style="cursor:pointer;"></div>
-      <span style="flex:1;cursor:pointer;" onclick="openEditModal('${t.id}')" title="点击编辑">${escHtml(t.text)}</span>
-      ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);">本周</span>':''}
-      <span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span>
-      <button class="act-btn del" onclick="deleteTask('${t.id}')" title="删除" style="opacity:0.6;">✕</button>
-    </div>`;});
+    let html='';undone.slice(0,5).forEach(t=>{html+=`<div class="cal-detail-task" onclick="cal2OpenDay()"><span style="flex:1;">${escHtml(t.text)}</span><span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span></div>`;});
+    if(undone.length>5)html+=`<div style="font-size:10px;color:var(--ink3);text-align:center;">还有 ${undone.length-5} 项…</div>`;
     document.getElementById('cal2DetailTasks').innerHTML=html;
   }
 }
 
-function cal2AddTask(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();cal2DoAdd();}}
-function cal2DoAdd(){
-  if(!cal2Sel)return;const v=document.getElementById('cal2AddInput').value;if(!v.trim())return;
+function cal2OpenDay(){
+  if(!cal2Sel)return;
+  const allDay=tasks.filter(t=>t.date===cal2Sel||(t.scope==='today'&&t.date===cal2Sel));
+  const done=allDay.filter(t=>t.done).length;const total=allDay.length;
+  document.getElementById('dayModalTitle').textContent=cal2Sel+' · '+new Date(cal2Sel).toLocaleDateString('zh-CN',{weekday:'long'});
+  document.getElementById('dayModalStats').innerHTML=total>0?`<span>总任务 <b>${total}</b></span><span>已完成 <b>${done}</b></span><span>待办 <b>${total-done}</b></span>`:'<span style="color:var(--ink3);">当天暂无任务</span>';
+  let html='';allDay.forEach(t=>{
+    html+=`<div class="day-modal-task">
+      <div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}');renderDayModal();"></div>
+      <span style="flex:1;cursor:pointer;" onclick="openEditModal('${t.id}')">${escHtml(t.text)}</span>
+      ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);">本周</span>':''}
+      <span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span>
+      <button class="del-btn" onclick="deleteTask('${t.id}');renderDayModal();">✕</button>
+    </div>`;
+  });
+  document.getElementById('dayModalTasks').innerHTML=html||'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>';
+  document.getElementById('dayModalInput').value='';
+  document.getElementById('dayModal').classList.add('show');
+}
+function renderDayModal(){
+  if(document.getElementById('dayModal').classList.contains('show'))cal2OpenDay();
+}
+function closeDayModal(){document.getElementById('dayModal').classList.remove('show');renderCal2();}
+function dayModalAdd(){
+  if(!cal2Sel)return;const v=document.getElementById('dayModalInput').value;if(!v.trim())return;
   const t={id:Date.now().toString(),text:v.trim(),done:false,scope:'today',priority:curPri,date:cal2Sel,createdAt:Date.now(),doneAt:null,notes:''};
-  tasks.unshift(t);save();render();renderCal2();document.getElementById('cal2AddInput').value='';
+  tasks.unshift(t);save();render();renderCal2();renderDayModal();
+  document.getElementById('dayModalInput').value='';
 }
 
 // ════════════════════════ PENGUIN DRAG ════════════════════════
@@ -1819,7 +1860,7 @@ const _origSave=save;save=function(){_origSave();if(sbClient)setTimeout(()=>sbPu
 
 // ════════════════════════ KEYBOARD SHORTCUTS ════════════════════════
 document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){const modals=[{el:document.getElementById('otModal'),close:closeOtModal},{el:document.getElementById('editModal'),close:closeEditModal},{el:document.getElementById('pomSettingsModal'),close:closePomSettings},{el:document.getElementById('weatherModal'),close:closeWeatherModal},{el:document.getElementById('themeModal'),close:closeThemeSettings}];for(const m of modals){if(m.el.classList.contains('show')){m.close();e.preventDefault();return;}}if(document.getElementById('chatPanel').classList.contains('show')){toggleChat();e.preventDefault();return;}if(document.activeElement===document.getElementById('searchInput')){document.getElementById('searchInput').blur();}}
+  if(e.key==='Escape'){const modals=[{el:document.getElementById('otModal'),close:closeOtModal},{el:document.getElementById('editModal'),close:closeEditModal},{el:document.getElementById('pomSettingsModal'),close:closePomSettings},{el:document.getElementById('weatherModal'),close:closeWeatherModal},{el:document.getElementById('themeModal'),close:closeThemeSettings},{el:document.getElementById('dayModal'),close:closeDayModal}];for(const m of modals){if(m.el.classList.contains('show')){m.close();e.preventDefault();return;}}if(document.getElementById('chatPanel').classList.contains('show')){toggleChat();e.preventDefault();return;}if(document.activeElement===document.getElementById('searchInput')){document.getElementById('searchInput').blur();}}
   if(e.key==='/'&&!e.ctrlKey&&!e.metaKey&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){e.preventDefault();document.getElementById('searchInput').focus();}
 });
 ['otModal','editModal','pomSettingsModal','weatherModal','themeModal'].forEach(id=>{document.getElementById(id).addEventListener('click',function(e){if(e.target===this){const fns={otModal:closeOtModal,editModal:closeEditModal,pomSettingsModal:closePomSettings,weatherModal:closeWeatherModal,themeModal:closeThemeSettings};fns[id]();}});});
