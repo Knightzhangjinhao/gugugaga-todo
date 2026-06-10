@@ -888,7 +888,12 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
     </div>
     <div class="day-modal-stats" id="dayModalStats"></div>
     <div class="day-modal-tasks" id="dayModalTasks"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
+    <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;">
+      <span style="font-size:10px;color:var(--ink3);">添加</span>
+      <button class="tog" style="font-size:10px;padding:3px 10px;" onclick="dayModalPri='high';this.className='tog on-high';this.nextElementSibling.className='tog';">重要</button>
+      <button class="tog on-normal" style="font-size:10px;padding:3px 10px;" onclick="dayModalPri='normal';this.className='tog on-normal';this.previousElementSibling.className='tog';">普通</button>
+    </div>
+    <div style="display:flex;gap:8px;" id="dayModalAddRow">
       <textarea class="add-input" id="dayModalInput" placeholder="添加任务…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();dayModalAdd();}" oninput="autoResizeAdd(this)" style="flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-family:inherit;font-size:13px;background:var(--bg);"></textarea>
       <button class="pom-btn" onclick="dayModalAdd()" style="flex-shrink:0;">添加</button>
     </div>
@@ -1690,7 +1695,7 @@ function switchPage(page){
 }
 
 // ════════════════════════ CALENDAR PAGE 2 ════════════════════════
-let cal2Year,cal2Month,cal2Sel;
+let cal2Year,cal2Month,cal2Sel,dayModalPri='normal';
 
 function initCal2(){
   const now=new Date();cal2Year=now.getFullYear();cal2Month=now.getMonth();
@@ -1754,12 +1759,12 @@ function cal2OpenDay(){
   document.getElementById('dayModalTitle').textContent=cal2Sel+' · '+new Date(cal2Sel).toLocaleDateString('zh-CN',{weekday:'long'});
   document.getElementById('dayModalStats').innerHTML=total>0?`<span>总任务 <b>${total}</b></span><span>已完成 <b>${done}</b></span><span>待办 <b>${total-done}</b></span>`:'<span style="color:var(--ink3);">当天暂无任务</span>';
   let html='';allDay.forEach(t=>{
-    html+=`<div class="day-modal-task">
+    html+=`<div class="day-modal-task" id="dmt-${t.id}" style="opacity:${t.done?'.5':'1'}">
       <div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}');renderDayModal();"></div>
       <span style="flex:1;cursor:pointer;" onclick="openEditModal('${t.id}')">${escHtml(t.text)}</span>
       ${t.scope==='week'?'<span style="font-size:9px;color:var(--ink3);">本周</span>':''}
       <span class="badge ${t.priority==='high'?'on-high':'on-normal'}" style="font-size:9px;">${t.priority==='high'?'重要':'普通'}</span>
-      <button class="del-btn" onclick="deleteTask('${t.id}');renderDayModal();">✕</button>
+      <button class="del-btn" onclick="event.stopPropagation();removeDayTaskRow('${t.id}');deleteTask('${t.id}');">✕</button>
     </div>`;
   });
   document.getElementById('dayModalTasks').innerHTML=html||'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>';
@@ -1767,12 +1772,26 @@ function cal2OpenDay(){
   document.getElementById('dayModal').classList.add('show');
 }
 function renderDayModal(){
-  if(document.getElementById('dayModal').classList.contains('show'))cal2OpenDay();
+  const modal=document.getElementById('dayModal');
+  if(!modal.classList.contains('show'))return;
+  // 只更新统计数字，不重建整个列表
+  const allDay=tasks.filter(t=>t.date===cal2Sel||(t.scope==='today'&&t.date===cal2Sel));
+  const done=allDay.filter(t=>t.done).length;const total=allDay.length;
+  document.getElementById('dayModalStats').innerHTML=total>0?`<span>总任务 <b>${total}</b></span><span>已完成 <b>${done}</b></span><span>待办 <b>${total-done}</b></span>`:'<span style="color:var(--ink3);">当天暂无任务</span>';
+  // 只更新被修改的任务行，不重建整个 DOM
+  allDay.forEach(t=>{
+    const row=document.getElementById('dmt-'+t.id);if(!row)return;
+    const chk=row.querySelector('.chk');if(chk)chk.className='chk'+(t.done?' on':'');
+    if(t.done)row.style.opacity='.5';else row.style.opacity='1';
+  });
+}
+function removeDayTaskRow(id){
+  const row=document.getElementById('dmt-'+id);if(row){row.style.transform='translateX(40px)';row.style.opacity='0';row.style.transition='all .2s';setTimeout(()=>{row.remove();renderDayModal();},200);}
 }
 function closeDayModal(){document.getElementById('dayModal').classList.remove('show');renderCal2();}
 function dayModalAdd(){
   if(!cal2Sel)return;const v=document.getElementById('dayModalInput').value;if(!v.trim())return;
-  const t={id:Date.now().toString(),text:v.trim(),done:false,scope:'today',priority:curPri,date:cal2Sel,createdAt:Date.now(),doneAt:null,notes:''};
+  const t={id:Date.now().toString(),text:v.trim(),done:false,scope:'today',priority:dayModalPri,date:cal2Sel,createdAt:Date.now(),doneAt:null,notes:''};
   tasks.unshift(t);save();render();renderCal2();renderDayModal();
   document.getElementById('dayModalInput').value='';
 }
