@@ -391,32 +391,36 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 html.dark .cal-card{background:rgba(30,30,34,0.4);border:1px solid rgba(255,255,255,0.06);box-shadow:0 2px 16px rgba(0,0,0,0.2),0 0 0 1px rgba(255,255,255,0.04);}
 /* ── CALENDAR PAGE 2 ── */
 .cal-page-wrap{display:flex;flex-direction:column;gap:16px;}
-.cal-page-head{display:flex;align-items:center;gap:8px;padding:0 0 8px;}
-.cal-page-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:400;color:var(--ink);letter-spacing:0.04em;}
-.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink2);font-size:14px;padding:4px 10px;transition:all .15s;}
+.cal-page-head{display:flex;align-items:baseline;gap:12px;padding:0 0 12px;border-bottom:1px solid var(--border);}
+.cal-page-title{font-family:'Noto Serif SC',serif;font-size:28px;font-weight:400;color:var(--ink);letter-spacing:0.04em;line-height:1;}
+.cal-page-year{font-size:13px;color:var(--ink3);font-weight:400;}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink2);font-size:14px;padding:5px 12px;transition:all .15s;margin-left:auto;}
 .cal-nav-btn:hover{color:var(--ink);border-color:var(--ink3);}
-.cal-page-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:6px 4px;font-size:9px;font-weight:500;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
-.cal-page-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
-.cal-page-cell{background:var(--card);min-height:90px;padding:4px 6px;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+.cal-page-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:8px 4px;font-size:10px;font-weight:500;color:var(--ink2);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.cal-page-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.cal-page-cell{background:var(--card);min-height:100px;padding:8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:flex-start;gap:4px;position:relative;}
 .cal-page-cell:hover{background:var(--card-warm);}
-.cal-page-cell.other-month{background:var(--bg);opacity:.4;}
-.cal-page-cell.today{background:var(--primary-xl);}
-.cal-page-cell.selected{box-shadow:inset 0 0 0 2px var(--ink);}
-.cal-page-cell-num{font-size:12px;font-weight:500;color:var(--ink2);line-height:1;}
-.cal-page-cell.today .cal-page-cell-num{color:var(--ink);font-weight:600;}
-.cal-page-cell-dots{display:flex;flex-wrap:wrap;gap:2px;overflow:hidden;}
-.cal-page-cell-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-.cal-page-cell-dot.high{background:var(--accent);}
-.cal-page-cell-dot.normal{background:var(--primary-xl);border:1px solid var(--primary);}
-.cal-page-cell-label{font-size:9px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.2;}
-.cal-page-detail{margin-top:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;}
-.cal-detail-date{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:400;color:var(--ink);margin-bottom:12px;letter-spacing:0.03em;}
-.cal-detail-tasks{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;max-height:200px;overflow-y:auto;}
-.cal-detail-task{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:12px;color:var(--ink2);border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;}
-.cal-detail-task:hover{background:var(--bg);}
+.cal-page-cell.other-month{background:var(--bg);opacity:.35;}
+.cal-page-cell.today{background:var(--primary-xl);border-radius:0;}
+.cal-page-cell.today::after{content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;background:var(--accent);border-radius:50%;}
+.cal-page-cell.selected{box-shadow:inset 0 0 0 2px var(--ink);z-index:2;}
+.cal-page-cell-num{font-size:14px;font-weight:500;color:var(--ink2);line-height:1;margin-bottom:2px;}
+.cal-page-cell.today .cal-page-cell-num{color:var(--ink);font-weight:700;}
+.cal-page-cell-count{font-size:10px;font-weight:500;color:var(--accent);}
+.cal-page-cell-label{font-size:9px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;line-height:1.3;}
+.cal-page-cell-add{position:absolute;bottom:6px;right:6px;width:22px;height:22px;border-radius:50%;border:1px dashed var(--border);background:transparent;color:var(--ink3);font-size:14px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;transition:all .12s;}
+.cal-page-cell:hover .cal-page-cell-add{display:flex;}
+.cal-page-cell-add:hover{border-color:var(--primary);color:var(--primary);background:var(--bg);}
+.cal-page-detail{margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;}
+.cal-detail-date{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:400;color:var(--ink);margin-bottom:4px;letter-spacing:0.03em;}
+.cal-detail-stats{display:flex;gap:16px;margin-bottom:14px;font-size:11px;color:var(--ink3);}
+.cal-detail-stats b{color:var(--ink);font-weight:600;}
+.cal-detail-tasks{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;max-height:220px;overflow-y:auto;}
+.cal-detail-task{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px;color:var(--ink2);border-radius:var(--radius-sm);cursor:pointer;transition:all .12s;border:1px solid transparent;}
+.cal-detail-task:hover{background:var(--bg);border-color:var(--border);}
 .cal-detail-task .chk{width:16px;height:16px;}
 .cal-detail-add{display:flex;flex-direction:column;gap:4px;}
-@media(max-width:860px){.cal-page-cell{min-height:60px;padding:2px 4px;}.cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:10px;}}
+@media(max-width:860px){.cal-page-cell{min-height:60px;padding:4px;}.cal-page-cell-label{display:none;}.cal-page-cell-num{font-size:11px;}.cal-page-title{font-size:20px;}}
 
 /* ── SETTINGS PAGE ── */
 .settings-section{margin-bottom:24px;}
@@ -749,15 +753,16 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 <div id="page2" style="display:none;max-width:900px;margin:0 auto;padding:28px 28px 80px;" class="cal-page-container">
   <div class="cal-page-wrap">
     <div class="cal-page-head">
-      <button class="cal-nav-btn" onclick="cal2PrevMonth()">◂</button>
       <span class="cal-page-title" id="cal2MonthLabel"></span>
+      <button class="cal-nav-btn" onclick="cal2PrevMonth()">◂</button>
       <button class="cal-nav-btn" onclick="cal2NextMonth()">▸</button>
-      <button class="cal-nav-btn" onclick="cal2GoToday()" style="font-size:11px;font-weight:500;margin-left:8px;">今天</button>
+      <button class="cal-nav-btn" onclick="cal2GoToday()" style="font-size:11px;font-weight:500;">今天</button>
     </div>
     <div class="cal-page-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
     <div class="cal-page-grid" id="cal2Grid"></div>
     <div class="cal-page-detail" id="cal2Detail">
       <div class="cal-detail-date" id="cal2DetailDate">选择日期查看详情</div>
+      <div class="cal-detail-stats" id="cal2DetailStats"></div>
       <div class="cal-detail-tasks" id="cal2DetailTasks"></div>
       <div class="cal-detail-add">
         <textarea class="add-input" id="cal2AddInput" placeholder="添加任务到这一天…（Shift+Enter 换行）" rows="1" onkeydown="cal2AddTask(event)" oninput="autoResizeAdd(this)" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;width:100%;font-size:13px;"></textarea>
@@ -1674,7 +1679,8 @@ function cal2NextMonth(){cal2Month++;if(cal2Month>11){cal2Month=0;cal2Year++;}re
 function cal2GoToday(){cal2Year=new Date().getFullYear();cal2Month=new Date().getMonth();cal2Sel=today();renderCal2();}
 
 function renderCal2(){
-  document.getElementById('cal2MonthLabel').textContent=cal2Year+'年'+(cal2Month+1)+'月';
+  document.getElementById('cal2MonthLabel').innerHTML=cal2Year+'年'+(cal2Month+1)+'月';
+  document.getElementById('cal2MonthLabel').nextElementSibling&&(document.getElementById('cal2MonthLabel').nextElementSibling.textContent=cal2Year);
   const firstDay=new Date(cal2Year,cal2Month,1).getDay();
   const daysInMonth=new Date(cal2Year,cal2Month+1,0).getDate();
   const daysInPrev=new Date(cal2Year,cal2Month,0).getDate();
@@ -1682,12 +1688,16 @@ function renderCal2(){
   for(let i=firstDay-1;i>=0;i--){html+=`<div class="cal-page-cell other-month"><span class="cal-page-cell-num">${daysInPrev-i}</span></div>`;}
   for(let d=1;d<=daysInMonth;d++){
     const ds=`${cal2Year}-${pad2(cal2Month+1)}-${pad2(d)}`;const isToday=ds===td;const isSel=ds===cal2Sel;
-    const cellTasks=tasks.filter(t=>(t.date===ds||(t.scope==='today'&&t.date===ds))&&!t.done);
-    let dots='',labels='';
-    cellTasks.slice(0,4).forEach(t=>{dots+=`<span class="cal-page-cell-dot ${t.priority==='high'?'high':'normal'}"></span>`;});
-    cellTasks.slice(0,3).forEach(t=>{labels+=`<div class="cal-page-cell-label">${escHtml(t.text.slice(0,8))}${t.text.length>8?'…':''}</div>`;});
+    const allCellTasks=tasks.filter(t=>t.date===ds||(t.scope==='today'&&t.date===ds));
+    const undone=allCellTasks.filter(t=>!t.done);
+    const done=allCellTasks.filter(t=>t.done);
+    let labels='';const cnt=undone.length;
+    let cntHtml=cnt>0?`<span class="cal-page-cell-count">${cnt}项</span>`:'';
+    if(cnt===0&&done.length>0)cntHtml=`<span class="cal-page-cell-count" style="color:var(--ink3);">✓${done.length}</span>`;
+    undone.slice(0,3).forEach(t=>{labels+=`<div class="cal-page-cell-label" style="${t.priority==='high'?'font-weight:600;':''}">${t.priority==='high'?'● ':''}${escHtml(t.text.slice(0,10))}${t.text.length>10?'…':''}</div>`;});
     html+=`<div class="cal-page-cell${isToday?' today':''}${isSel?' selected':''}" onclick="cal2Pick('${ds}')">
-      <span class="cal-page-cell-num">${d}</span><div class="cal-page-cell-dots">${dots}</div>${labels}
+      <span class="cal-page-cell-num">${d}</span>${cntHtml}${labels}
+      <button class="cal-page-cell-add" onclick="event.stopPropagation();cal2QuickAdd('${ds}')">+</button>
     </div>`;
   }
   const rem=(7-((firstDay+daysInMonth)%7))%7;
@@ -1695,15 +1705,18 @@ function renderCal2(){
   document.getElementById('cal2Grid').innerHTML=html;
   cal2ShowDetail();
 }
+function cal2QuickAdd(ds){cal2Sel=ds;renderCal2();document.getElementById('cal2AddInput').focus();}
 
 function cal2Pick(ds){cal2Sel=ds;renderCal2();}
 
 function cal2ShowDetail(){
-  const detail=document.getElementById('cal2Detail');
   if(!cal2Sel){document.getElementById('cal2DetailDate').textContent='选择日期查看详情';document.getElementById('cal2DetailTasks').innerHTML='';return;}
+  const allDay=tasks.filter(t=>t.date===cal2Sel||(t.scope==='today'&&t.date===cal2Sel));
+  const done=allDay.filter(t=>t.done).length;const total=allDay.length;
   document.getElementById('cal2DetailDate').textContent=cal2Sel+' · '+new Date(cal2Sel).toLocaleDateString('zh-CN',{weekday:'long'});
-  const dayTasks=tasks.filter(t=>(t.date===cal2Sel||t.scope==='week')&&!t.done);
-  if(dayTasks.length===0){document.getElementById('cal2DetailTasks').innerHTML='<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>';}
+  document.getElementById('cal2DetailStats').innerHTML=total>0?`<span>总任务 <b>${total}</b></span><span>已完成 <b>${done}</b></span><span>待办 <b>${total-done}</b></span>`:'';
+  const dayTasks=allDay.filter(t=>!t.done);
+  if(dayTasks.length===0){document.getElementById('cal2DetailTasks').innerHTML=allDay.length===0?'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">暂无任务</div>':'<div style="color:var(--ink3);font-size:12px;padding:8px 0;">🎉 全部完成！</div>';}
   else{
     let html='';dayTasks.forEach(t=>{html+=`<div class="cal-detail-task" onclick="toggleTask('${t.id}')">
       <div class="chk${t.done?' on':''}"></div><span style="flex:1;">${escHtml(t.text)}</span>
