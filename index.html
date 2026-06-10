@@ -307,6 +307,8 @@ html.dark .dark-toggle:hover{background:rgba(255,255,255,0.08);}
 .task-item.swiping-r{transform:translateX(60px);opacity:.3;transition:transform .2s;}
 .task-item.swiping-l{transform:translateX(-60px);background:rgba(180,100,80,.1);transition:transform .2s;}
 .recur-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:4px;}
+.recur-day-btn{transition:all .12s;}.recur-day-btn.on{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important;}
+.recur-day-btn:hover{border-color:var(--primary);}
 .pom-settings-btn{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:2px 3px;border-radius:3px;transition:all .15s;}
 .pom-settings-btn:hover{color:var(--primary);}
 .pom-range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -779,8 +781,23 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   <div class="settings-section">
     <h3 class="settings-title">循环任务</h3>
     <div id="recurringList" style="margin-bottom:8px;"></div>
-    <button class="settings-btn" onclick="addRecurring()" style="border-style:dashed;">+ 添加循环任务</button>
-    <div style="font-size:10px;color:var(--ink3);margin-top:6px;">每日首次打开页面时自动添加到今日待办。未完成的任务不会消失。</div>
+    <div id="recurDraft" style="display:none;padding:10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <input type="text" id="recurDraftText" placeholder="任务内容…" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-family:inherit;font-size:12px;margin-bottom:8px;" onkeydown="if(event.key==='Enter')confirmAddRecurring()"/>
+      <div style="font-size:10px;font-weight:500;color:var(--ink3);margin-bottom:4px;">生效日期</div>
+      <div style="display:flex;gap:3px;margin-bottom:6px;flex-wrap:wrap;" id="recurDayBtns"></div>
+      <button class="template-btn" onclick="recurSetWeekdays()" style="margin-bottom:8px;">工作日（周一~周五）</button>
+      <div style="font-size:10px;font-weight:500;color:var(--ink3);margin-bottom:4px;">优先级</div>
+      <div style="display:flex;gap:4px;margin-bottom:8px;">
+        <button class="edit-tog on-high" id="recurPriHigh" onclick="recurTogglePri('high')">重要</button>
+        <button class="edit-tog" id="recurPriNormal" onclick="recurTogglePri('normal')">普通</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="pom-btn" onclick="confirmAddRecurring()" style="flex:1;">确认添加</button>
+        <button class="pom-btn secondary" onclick="toggleRecurDraft()" style="flex:1;">取消</button>
+      </div>
+    </div>
+    <button class="settings-btn" onclick="toggleRecurDraft()" style="border-style:dashed;">+ 添加循环任务</button>
+    <div style="font-size:10px;color:var(--ink3);margin-top:6px;">每日首次打开页面时自动添加到今日待办。点击日期按钮选择生效日，支持工作日快捷。</div>
   </div>
   <div class="settings-section">
     <h3 class="settings-title">同步</h3>
@@ -1489,7 +1506,7 @@ function autoAddRecurring(){
       if(!exists){addTask(rt.text,'today',rt.priority||'normal','');added++;}
     }
   });
-  if(added>0){localStorage.setItem(RECUR_DATE,td);console.log('🔄 自动添加 '+added+' 条循环任务');}
+  if(added>0){localStorage.setItem(RECUR_DATE,td);showToast('🔄 今日循环任务已添加 '+added+' 条');setTimeout(hideToast,2500);}
 }
 function renderRecurringManager(){
   let html='';
@@ -1497,21 +1514,40 @@ function renderRecurringManager(){
     const daysStr=rt.days.map(d=>DAY_NAMES[d]).join('·');
     html+=`<div class="recur-row"><div style="flex:1;"><span style="font-size:12px;color:var(--ink2);">${rt.text}</span><br><span style="font-size:10px;color:var(--ink3);">${daysStr} · ${rt.priority==='high'?'重要':'普通'}</span></div><button class="template-del" onclick="recurringTasks.splice(${i},1);saveRecurring();renderRecurringManager();">×</button></div>`;
   });
-  if(!html)html='<div style="font-size:11px;color:var(--ink3);padding:6px 0;">暂无循环任务</div>';
+  if(!html)html='<div style="font-size:11px;color:var(--ink3);padding:6px 0;">暂无循环任务 · 点击下方按钮添加</div>';
   document.getElementById('recurringList').innerHTML=html;
 }
-function addRecurring(){
-  const text=prompt('输入任务内容：');if(!text||!text.trim())return;
-  const pri=confirm('设为「重要」优先级？')?'high':'normal';
-  let daysStr=prompt('选择生效日期（用逗号分隔，如 1,2,3,4,5 表示周一到周五）：\n0=周日 1=周一 2=周二 3=周三 4=周四 5=周五 6=周六\n快捷：输入 w 表示工作日（周一至周五）');
-  if(!daysStr)return;
-  let days;
-  if(daysStr.trim().toLowerCase()==='w'){days=[1,2,3,4,5];}
-  else{try{days=daysStr.split(',').map(s=>parseInt(s.trim())).filter(d=>d>=0&&d<=6);}catch(e){days=[1,2,3,4,5];}}
-  if(days.length===0)return;
-  recurringTasks.push({id:Date.now().toString(),text:text.trim(),priority:pri,days:days});
-  saveRecurring();renderRecurringManager();
+
+// ── 新增循环任务（设置页内交互，不用 prompt）──
+let recurDraft={show:false,text:'',days:[1,2,3,4,5],priority:'normal'};
+function renderRecurDayBtns(){
+  let html='';
+  for(let d=0;d<7;d++){
+    html+=`<button class="recur-day-btn${recurDraft.days.includes(d)?' on':''}" data-day="${d}" onclick="recurToggleDay(${d})" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;">${DAY_NAMES[d]}</button>`;
+  }
+  document.getElementById('recurDayBtns').innerHTML=html;
 }
+function toggleRecurDraft(){
+  recurDraft.show=!recurDraft.show;
+  document.getElementById('recurDraft').style.display=recurDraft.show?'block':'none';
+  if(recurDraft.show){renderRecurDayBtns();document.getElementById('recurDraftText').focus();}
+}
+function confirmAddRecurring(){
+  const text=document.getElementById('recurDraftText').value.trim();if(!text)return;
+  recurringTasks.push({id:Date.now().toString(),text:text,priority:recurDraft.priority,days:[...recurDraft.days]});
+  saveRecurring();recurDraft={show:false,text:'',days:[1,2,3,4,5],priority:'normal'};
+  document.getElementById('recurDraftText').value='';document.getElementById('recurDraft').style.display='none';
+  renderRecurringManager();
+}
+function recurToggleDay(d){
+  const idx=recurDraft.days.indexOf(d);if(idx>-1)recurDraft.days.splice(idx,1);else recurDraft.days.push(d);
+  recurDraft.days.sort();
+  document.querySelectorAll('.recur-day-btn').forEach(b=>{
+    const day=parseInt(b.dataset.day);b.classList.toggle('on',recurDraft.days.includes(day));
+  });
+}
+function recurSetWeekdays(){recurDraft.days=[1,2,3,4,5];document.querySelectorAll('.recur-day-btn').forEach(b=>{b.classList.toggle('on',recurDraft.days.includes(parseInt(b.dataset.day)));});}
+function recurTogglePri(p){recurDraft.priority=p;document.getElementById('recurPriHigh').className='edit-tog '+(p==='high'?'on-high':'');document.getElementById('recurPriNormal').className='edit-tog '+(p==='normal'?'on-normal':'');}
 
 // ════════════════════════ MOBILE SWIPE ════════════════════════
 let swipeStartX=0,swipeStartY=0,swipeTaskId=null;
