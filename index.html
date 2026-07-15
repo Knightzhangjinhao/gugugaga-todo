@@ -849,64 +849,64 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 </div>
 
 <!-- PAGE 4: POMODORO -->
-<div id="page4" style="display:none;min-height:100vh;background:linear-gradient(180deg,#1f2a1d 0%,#2d3a2a 100%);">
+<div id="page4" style="display:none;min-height:100vh;background:#141413;">
   <div style="max-width:600px;margin:0 auto;padding:60px 28px;text-align:center;">
-    <div style="font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:32px;">Focus Session</div>
+    <div style="font-size:11px;font-weight:500;letter-spacing:.1em;color:rgba(255,255,255,.25);margin-bottom:32px;">专注时间</div>
 
     <!-- Timer Ring -->
     <div style="position:relative;width:260px;height:260px;margin:0 auto 40px;">
       <svg width="260" height="260" viewBox="0 0 260 260" style="transform:rotate(-90deg);">
-        <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
-        <circle cx="130" cy="130" r="115" fill="none" stroke="#85AB8B" stroke-width="6" stroke-linecap="round"
+        <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="5"/>
+        <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="5" stroke-linecap="round"
           stroke-dasharray="722.6" stroke-dashoffset="0" id="pomPageArc" style="transition:stroke-dashoffset .4s ease-out;"/>
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div style="font-size:64px;font-weight:300;color:#fff;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;" id="pomPageDisplay">25:00</div>
-        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;" id="pomPagePhase">Focus</div>
+        <div style="font-size:72px;font-weight:250;color:#fff;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;" id="pomPageDisplay">25:00</div>
+        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-top:8px;" id="pomPagePhase">专注</div>
       </div>
     </div>
 
     <!-- Controls -->
-    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:40px;">
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:48px;">
       <button id="pomPageStartBtn" onclick="pomPageToggle()"
-        style="background:#85AB8B;color:#1f2a1d;border:none;padding:14px 40px;border-radius:100px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .2s;min-width:140px;">
-        Begin
+        style="background:rgba(255,255,255,.9);color:#141413;border:none;padding:14px 44px;border-radius:100px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.04em;transition:all .2s;min-width:140px;">
+        开始
       </button>
       <button onclick="pomPageReset()"
-        style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);padding:14px 24px;border-radius:100px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;">
-        Reset
+        style="background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);padding:14px 24px;border-radius:100px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;">
+        重置
       </button>
     </div>
 
     <!-- Session Info -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:400px;margin:0 auto 32px;">
-      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
-        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageSessions">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Sessions</div>
+      <div style="background:rgba(255,255,255,.03);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.05);">
+        <div style="font-size:28px;font-weight:400;color:#fff;line-height:1;" id="pomPageSessions">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:6px;">今日番茄</div>
       </div>
-      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
-        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageFocusMin">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Focus min</div>
+      <div style="background:rgba(255,255,255,.03);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.05);">
+        <div style="font-size:28px;font-weight:400;color:#fff;line-height:1;" id="pomPageFocusMin">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:6px;">专注分钟</div>
       </div>
-      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
-        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageStreak">0</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Streak</div>
+      <div style="background:rgba(255,255,255,.03);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.05);">
+        <div style="font-size:28px;font-weight:400;color:#fff;line-height:1;" id="pomPageStreak">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:6px;">连续番茄</div>
       </div>
     </div>
 
     <!-- Task Picker -->
-    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:16px 20px;text-align:left;border:1px solid rgba(255,255,255,.06);max-width:400px;margin:0 auto 12px;">
-      <div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Current Task</div>
+    <div style="background:rgba(255,255,255,.03);border-radius:14px;padding:16px 20px;text-align:left;border:1px solid rgba(255,255,255,.05);max-width:400px;margin:0 auto 12px;">
+      <div style="font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.06em;margin-bottom:8px;">当前任务</div>
       <select id="pomPageTask" onchange="pomPagePickTask()"
-        style="width:100%;background:transparent;border:none;color:rgba(255,255,255,.8);font-family:inherit;font-size:13px;outline:none;cursor:pointer;">
-        <option value="" style="color:#1f2a1d;">No specific task</option>
+        style="width:100%;background:transparent;border:none;color:rgba(255,255,255,.6);font-family:inherit;font-size:13px;outline:none;cursor:pointer;">
+        <option value="" style="color:#141413;">未选择任务</option>
       </select>
     </div>
 
     <!-- Settings Link -->
     <button onclick="openPomSettings()"
-      style="background:none;border:none;color:rgba(255,255,255,.35);font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.04em;transition:color .2s;margin-top:8px;">
-      Settings
+      style="background:none;border:none;color:rgba(255,255,255,.2);font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.04em;transition:color .2s;margin-top:12px;">
+      番茄钟设置
     </button>
   </div>
 </div>
@@ -1103,7 +1103,7 @@ function updateOT(){const now=new Date(),end=new Date();end.setHours(otHour,otMi
 function updateUrgency(diff,pend){const el=document.getElementById('urgency'),inner=document.getElementById('urgencyInner');if(diff==='off'||diff>7200){el.classList.remove('show');return;}el.classList.add('show');if(diff<3600){inner.className='urgency-inner lvl-urgent';inner.innerHTML='🔥 距下班不足1小时，还有 <b>'+pend+'</b> 项未完成，全力冲刺！';}else{inner.className='urgency-inner lvl-warn';inner.innerHTML='⚡ 距下班约 '+Math.floor(diff/3600)+'小时，还有 <b>'+pend+'</b> 项今日任务，加油！';}}
 
 // ════════════════════════ RENDER ════════════════════════
-function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active'){if(!t.done)return true;if(getFeature('showCompletedInActive')&&t.done&&t.date===today())return true;return false;}if(curTab==='done')return t.done;return true;});}
+function getVisible(){return tasks.filter(t=>{if(pendingDelete&&t.id===pendingDelete.id)return false;if(searchTerm){if(!t.text.toLowerCase().includes(searchTerm)&&!(t.notes||'').toLowerCase().includes(searchTerm))return false;}if(curTab==='active'){if(!t.done)return true;if(t.done&&(t.date===today()||t.scope==='today'))return true;return false;}if(curTab==='done')return t.done;return true;});}
 function groupTasks(list){const groups={};list.forEach(t=>{let g;if(t.scope==='week'){g='week';}else if(t.date&&t.date!=='week'){g=t.date;}else{g=t.date||'unknown';}if(!groups[g])groups[g]=[];groups[g].push(t);});return groups;}
 
 function render(){
@@ -1232,8 +1232,8 @@ function pomPageReset(){pomReset();pomPageRenderUI();}
 function pomPageRenderUI(){
   const r=pomState.remaining;const total=pomState.phase==='work'?pomWorkSecs:pomBreakSecs;
   document.getElementById('pomPageDisplay').textContent=pad2(Math.floor(r/60))+':'+pad2(r%60);
-  document.getElementById('pomPagePhase').textContent=pomState.phase==='work'?'Focus':'Break';
-  document.getElementById('pomPageStartBtn').textContent=pomState.running?'Pause':'Begin';
+  document.getElementById('pomPagePhase').textContent=pomState.phase==='work'?'专注':'休息';
+  document.getElementById('pomPageStartBtn').textContent=pomState.running?'暂停':'开始';
   const arc=document.getElementById('pomPageArc');const CIRC2=2*Math.PI*115;
   arc.style.strokeDashoffset=CIRC2*(1-(r/total));
   arc.style.stroke=pomState.phase==='break'?'#c47a5a':'#85AB8B';
@@ -1242,8 +1242,8 @@ function pomPageRenderUI(){
 function pomPageLoadTasks(){
   const sel=document.getElementById('pomPageTask');if(!sel)return;
   const todayTasks=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today());
-  sel.innerHTML='<option value="" style="color:#1f2a1d;">No specific task</option>';
-  todayTasks.forEach(t=>{sel.innerHTML+=`<option value="${t.id}" style="color:#1f2a1d;">${escHtml(t.text.slice(0,35))}${t.text.length>35?'…':''}</option>`;});
+  sel.innerHTML='<option value="">无需关联任务</option>';
+  todayTasks.forEach(t=>{sel.innerHTML+=`<option value="${t.id}">${escHtml(t.text.slice(0,35))}${t.text.length>35?'…':''}</option>`;});
 }
 function pomPagePickTask(){}
 function openPomSettings(){document.getElementById('pomWorkRange').value=Math.floor(pomWorkSecs/60);document.getElementById('pomBreakRange').value=Math.floor(pomBreakSecs/60);document.getElementById('pomLongBreakRange').value=Math.floor(pomLongBreakSecs/60);document.getElementById('pomAutoCycle').checked=pomAutoCycle;pomSettingsRangeChanged();document.getElementById('pomSettingsModal').classList.add('show');}
