@@ -648,6 +648,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="tab-bar" id="pageSwitcher" style="margin-right:12px;">
         <button class="tab on" onclick="switchPage('tasks')" id="page-tab-tasks">任务</button>
         <button class="tab" onclick="switchPage('calendar')" id="page-tab-calendar">日历</button>
+        <button class="tab" onclick="switchPage('pomodoro')" id="page-tab-pomodoro">番茄</button>
         <button class="tab" onclick="switchPage('settings')" id="page-tab-settings">设置</button>
       </div>
       <div class="tab-bar" id="taskTabs">
@@ -844,6 +845,69 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="changelog-item"><strong>v2.0</strong> <span>2026-05-26</span> —— 📋 任务增强<br>内联编辑 · 今天/本周范围 · 重要/普通优先级</div>
       <div class="changelog-item"><strong>v1.0</strong> <span>2026-05-26</span> —— 🚀 初始版本<br>基础 Todo · localStorage · 日期分组 · 下班倒计时 · Apple 极简风 UI</div>
     </div>
+  </div>
+</div>
+
+<!-- PAGE 4: POMODORO -->
+<div id="page4" style="display:none;min-height:100vh;background:linear-gradient(180deg,#1f2a1d 0%,#2d3a2a 100%);">
+  <div style="max-width:600px;margin:0 auto;padding:60px 28px;text-align:center;">
+    <div style="font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:32px;">Focus Session</div>
+
+    <!-- Timer Ring -->
+    <div style="position:relative;width:260px;height:260px;margin:0 auto 40px;">
+      <svg width="260" height="260" viewBox="0 0 260 260" style="transform:rotate(-90deg);">
+        <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
+        <circle cx="130" cy="130" r="115" fill="none" stroke="#85AB8B" stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="722.6" stroke-dashoffset="0" id="pomPageArc" style="transition:stroke-dashoffset .4s ease-out;"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:64px;font-weight:300;color:#fff;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;" id="pomPageDisplay">25:00</div>
+        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;" id="pomPagePhase">Focus</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:40px;">
+      <button id="pomPageStartBtn" onclick="pomPageToggle()"
+        style="background:#85AB8B;color:#1f2a1d;border:none;padding:14px 40px;border-radius:100px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .2s;min-width:140px;">
+        Begin
+      </button>
+      <button onclick="pomPageReset()"
+        style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);padding:14px 24px;border-radius:100px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;">
+        Reset
+      </button>
+    </div>
+
+    <!-- Session Info -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:400px;margin:0 auto 32px;">
+      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageSessions">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Sessions</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageFocusMin">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Focus min</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:16px 12px;border:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:24px;font-weight:500;color:#fff;line-height:1;" id="pomPageStreak">0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.04em;">Streak</div>
+      </div>
+    </div>
+
+    <!-- Task Picker -->
+    <div style="background:rgba(255,255,255,.04);border-radius:14px;padding:16px 20px;text-align:left;border:1px solid rgba(255,255,255,.06);max-width:400px;margin:0 auto 12px;">
+      <div style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">Current Task</div>
+      <select id="pomPageTask" onchange="pomPagePickTask()"
+        style="width:100%;background:transparent;border:none;color:rgba(255,255,255,.8);font-family:inherit;font-size:13px;outline:none;cursor:pointer;">
+        <option value="" style="color:#1f2a1d;">No specific task</option>
+      </select>
+    </div>
+
+    <!-- Settings Link -->
+    <button onclick="openPomSettings()"
+      style="background:none;border:none;color:rgba(255,255,255,.35);font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.04em;transition:color .2s;margin-top:8px;">
+      Settings
+    </button>
   </div>
 </div>
 
@@ -1154,8 +1218,34 @@ function onMemoChange(){clearTimeout(memoTimer);const indicator=document.getElem
 function pomToggle(){if(pomState.running){clearInterval(pomTick);pomState.running=false;document.getElementById('pomStartBtn').textContent='继续';}else{pomState.running=true;document.getElementById('pomStartBtn').textContent='暂停';pomTick=setInterval(pomTick_fn,1000);}}
 function pomTick_fn(){if(pomState.remaining<=0){clearInterval(pomTick);pomState.running=false;if(pomState.phase==='work'){pomState.sessions++;pomState.consecutiveWorks++;savePom();playPomSound('work-end');const isLongBreak=pomState.consecutiveWorks>=4;if(isLongBreak){pomState.phase='break';pomState.remaining=pomLongBreakSecs;pomState.consecutiveWorks=0;notify('番茄钟','🎉 完成4个番茄！长休息 '+Math.floor(pomLongBreakSecs/60)+' 分钟');}else{pomState.phase='break';pomState.remaining=pomBreakSecs;notify('番茄钟','专注结束！休息 '+Math.floor(pomBreakSecs/60)+' 分钟 ☕');}}else{pomState.phase='work';pomState.remaining=pomWorkSecs;playPomSound('break-end');notify('番茄钟','休息结束！开始下一轮专注 🍅');}if(pomAutoCycle){if(pomAutoTimer)clearTimeout(pomAutoTimer);pomAutoTimer=setTimeout(()=>{pomState.running=true;pomTick=setInterval(pomTick_fn,1000);document.getElementById('pomStartBtn').textContent='暂停';pomRenderUI();},2500);}document.getElementById('pomStartBtn').textContent=pomAutoCycle?'即将开始…':'开始';}else{if(pomState.phase==='work'&&pomState.running)pomState.focusSecs++;pomState.remaining--;}pomRenderUI();savePom();}
 function pomReset(){clearInterval(pomTick);pomState.running=false;pomState.phase='work';pomState.remaining=pomWorkSecs;document.getElementById('pomStartBtn').textContent='开始';pomRenderUI();}
-function pomRenderUI(){const r=pomState.remaining;const total=pomState.phase==='work'?pomWorkSecs:pomBreakSecs;const pct=r/total;const offset=CIRC*(1-pct);document.getElementById('pomDisplay').textContent=pad2(Math.floor(r/60))+':'+pad2(r%60);document.getElementById('pomPhase').textContent=pomState.phase==='work'?'专注':'休息';const arc=document.getElementById('pomArc');arc.style.strokeDashoffset=offset;arc.className='pom-ring-fill'+(pomState.phase==='break'?' brk':'');updatePomStats();}
-function updatePomStats(){document.getElementById('pomCount').textContent=pomState.sessions;document.getElementById('pomFocusMin').textContent=Math.floor(pomState.focusSecs/60);document.getElementById('pomSessionLabel').textContent='第'+pomState.sessions+'个番茄';}
+function pomRenderUI(){const r=pomState.remaining;const total=pomState.phase==='work'?pomWorkSecs:pomBreakSecs;const pct=r/total;const offset=CIRC*(1-pct);document.getElementById('pomDisplay').textContent=pad2(Math.floor(r/60))+':'+pad2(r%60);document.getElementById('pomPhase').textContent=pomState.phase==='work'?'专注':'休息';const arc=document.getElementById('pomArc');arc.style.strokeDashoffset=offset;arc.className='pom-ring-fill'+(pomState.phase==='break'?' brk':'');updatePomStats();pomPageRenderUI();}
+function updatePomStats(){document.getElementById('pomCount').textContent=pomState.sessions;document.getElementById('pomFocusMin').textContent=Math.floor(pomState.focusSecs/60);document.getElementById('pomSessionLabel').textContent='第'+pomState.sessions+'个番茄';updatePomPageStats();}
+function updatePomPageStats(){
+  const s=document.getElementById('pomPageSessions');if(s)s.textContent=pomState.sessions;
+  const f=document.getElementById('pomPageFocusMin');if(f)f.textContent=Math.floor(pomState.focusSecs/60);
+  const st=document.getElementById('pomPageStreak');if(st)st.textContent=pomState.consecutiveWorks||0;
+}
+
+// 番茄页共享同一个 pomState，但有独立 UI
+function pomPageToggle(){pomToggle();pomPageRenderUI();}
+function pomPageReset(){pomReset();pomPageRenderUI();}
+function pomPageRenderUI(){
+  const r=pomState.remaining;const total=pomState.phase==='work'?pomWorkSecs:pomBreakSecs;
+  document.getElementById('pomPageDisplay').textContent=pad2(Math.floor(r/60))+':'+pad2(r%60);
+  document.getElementById('pomPagePhase').textContent=pomState.phase==='work'?'Focus':'Break';
+  document.getElementById('pomPageStartBtn').textContent=pomState.running?'Pause':'Begin';
+  const arc=document.getElementById('pomPageArc');const CIRC2=2*Math.PI*115;
+  arc.style.strokeDashoffset=CIRC2*(1-(r/total));
+  arc.style.stroke=pomState.phase==='break'?'#c47a5a':'#85AB8B';
+  updatePomPageStats();
+}
+function pomPageLoadTasks(){
+  const sel=document.getElementById('pomPageTask');if(!sel)return;
+  const todayTasks=tasks.filter(t=>!t.done&&t.scope==='today'&&t.date===today());
+  sel.innerHTML='<option value="" style="color:#1f2a1d;">No specific task</option>';
+  todayTasks.forEach(t=>{sel.innerHTML+=`<option value="${t.id}" style="color:#1f2a1d;">${escHtml(t.text.slice(0,35))}${t.text.length>35?'…':''}</option>`;});
+}
+function pomPagePickTask(){}
 function openPomSettings(){document.getElementById('pomWorkRange').value=Math.floor(pomWorkSecs/60);document.getElementById('pomBreakRange').value=Math.floor(pomBreakSecs/60);document.getElementById('pomLongBreakRange').value=Math.floor(pomLongBreakSecs/60);document.getElementById('pomAutoCycle').checked=pomAutoCycle;pomSettingsRangeChanged();document.getElementById('pomSettingsModal').classList.add('show');}
 function closePomSettings(){document.getElementById('pomSettingsModal').classList.remove('show');}
 function pomSettingsRangeChanged(){document.getElementById('pomWorkVal').textContent=document.getElementById('pomWorkRange').value+' 分钟';document.getElementById('pomBreakVal').textContent=document.getElementById('pomBreakRange').value+' 分钟';document.getElementById('pomLongBreakVal').textContent=document.getElementById('pomLongBreakRange').value+' 分钟';}
@@ -1690,9 +1780,11 @@ function switchPage(page){
   document.getElementById('page1').style.display=page==='tasks'?'':'none';
   document.getElementById('page2').style.display=page==='calendar'?'':'none';
   document.getElementById('page3').style.display=page==='settings'?'':'none';
+  document.getElementById('page4').style.display=page==='pomodoro'?'':'none';
   document.getElementById('taskTabs').style.display=page==='tasks'?'':'none';
-  ['tasks','calendar','settings'].forEach(p=>{document.getElementById('page-tab-'+p).className='tab'+(page===p?' on':'');});
+  ['tasks','calendar','pomodoro','settings'].forEach(p=>{document.getElementById('page-tab-'+p).className='tab'+(page===p?' on':'');});
   if(page==='calendar'){initCal2();}
+  if(page==='pomodoro'){pomPageRenderUI();pomPageLoadTasks();}
   if(page==='settings'){renderSettingsToggles();renderRecurringManager();updateSbStatus();}
 }
 
