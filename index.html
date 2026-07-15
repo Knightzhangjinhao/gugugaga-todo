@@ -646,7 +646,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       </div>
     </div>
     <div class="header-bottom">
-      <div class="tab-bar" id="pageSwitcher" style="margin-right:12px;">
+      <div class="tab-bar" id="pageSwitcher" style="display:none;">
         <button class="tab on" onclick="switchPage('tasks')" id="page-tab-tasks">任务</button>
         <button class="tab" onclick="switchPage('calendar')" id="page-tab-calendar">日历</button>
         <button class="tab" onclick="switchPage('pomodoro')" id="page-tab-pomodoro">番茄</button>
@@ -666,14 +666,15 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="header-settings-row">
         <button class="shortcut-btn" onclick="document.getElementById('shortcutModal').classList.add('show')" title="快捷键">?</button>
         <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" title="切换暗色模式">☼</button>
-        <button class="theme-settings-btn" onclick="openThemeSettings()">🎨 主题</button>
+        <button class="theme-settings-btn" onclick="switchPage('calendar')" title="日历">📅</button>
+        <button class="theme-settings-btn" onclick="switchPage('settings')" title="设置">⚙</button>
       </div>
     </div>
   </div>
 </header>
 <div class="urgency" id="urgency"><div class="urgency-inner" id="urgencyInner"></div></div>
 
-<div id="page1" class="page-body">
+<div id="page1" class="page-body" style="display:grid;">
   <!-- CALENDAR PANEL -->
   <div id="calPanel">
     <div class="cal-card">
@@ -726,7 +727,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
   <aside class="sidebar">
     <!-- Pomodoro -->
     <div class="side-card" id="pomodoroCard">
-      <div class="side-card-head"><span style="font-size:15px;">🍅</span><h3>番茄钟</h3><button class="pom-settings-btn" onclick="openPomSettings()" title="设置">⚙</button><span id="pomSessionLabel" style="font-size:10px;color:var(--ink3);"></span></div>
+      <div class="side-card-head"><span style="font-size:15px;">🍅</span><h3>番茄钟</h3><button class="pom-settings-btn" onclick="switchPage('pomodoro')" title="全屏专注">⛶</button><button class="pom-settings-btn" onclick="openPomSettings()" title="设置">⚙</button><span id="pomSessionLabel" style="font-size:10px;color:var(--ink3);"></span></div>
       <div class="side-card-body">
         <div class="pom-ring-wrap">
           <svg class="pom-ring" width="120" height="120" viewBox="0 0 120 120"><circle class="pom-ring-bg" cx="60" cy="60" r="50"/><circle class="pom-ring-fill" id="pomArc" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0"/></svg>
@@ -763,13 +764,14 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 </div>
 
 <!-- PAGE 2: CALENDAR -->
-<div id="page2" style="display:none;max-width:900px;margin:0 auto;padding:28px 28px 80px;" class="cal-page-container">
+<div id="page2" style="display:none;position:fixed;inset:0;z-index:800;background:var(--bg);overflow-y:auto;padding:28px 28px 80px;">
   <div class="cal-page-wrap">
     <div class="cal-page-head">
       <span class="cal-page-title" id="cal2MonthLabel"></span>
       <button class="cal-nav-btn" onclick="cal2PrevMonth()">◂</button>
       <button class="cal-nav-btn" onclick="cal2NextMonth()">▸</button>
       <button class="cal-nav-btn" onclick="cal2GoToday()" style="font-size:11px;font-weight:500;">今天</button>
+      <button class="cal-nav-btn" onclick="switchPage('tasks')" style="margin-left:auto;">✕ 关闭</button>
     </div>
     <div class="cal-page-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
     <div class="cal-page-grid" id="cal2Grid"></div>
@@ -783,7 +785,9 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
 </div>
 
 <!-- PAGE 3: SETTINGS -->
-<div id="page3" style="display:none;max-width:700px;margin:0 auto;padding:28px 28px 80px;">
+<div id="page3" style="display:none;position:fixed;inset:0;z-index:800;background:var(--bg);overflow-y:auto;">
+  <div style="max-width:700px;margin:0 auto;padding:28px 28px 80px;">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="switchPage('tasks')" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--ink3);">✕</button></div>
   <div class="settings-section">
     <h3 class="settings-title">功能开关</h3>
     <div class="settings-toggles" id="settingsToggles"></div>
@@ -846,6 +850,7 @@ html.dark .chat-msg.ai pre{background:rgba(255,255,255,0.05);}
       <div class="changelog-item"><strong>v2.0</strong> <span>2026-05-26</span> —— 📋 任务增强<br>内联编辑 · 今天/本周范围 · 重要/普通优先级</div>
       <div class="changelog-item"><strong>v1.0</strong> <span>2026-05-26</span> —— 🚀 初始版本<br>基础 Todo · localStorage · 日期分组 · 下班倒计时 · Apple 极简风 UI</div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -1779,12 +1784,11 @@ function updateSbStatus(){
 let currentPage='tasks';
 function switchPage(page){
   currentPage=page;
-  document.getElementById('page1').style.display=page==='tasks'?'':'none';
+  document.getElementById('page1').style.display=(page==='tasks'||page==='pomodoro')?'':'none';
   document.getElementById('page2').style.display=page==='calendar'?'':'none';
   document.getElementById('page3').style.display=page==='settings'?'':'none';
   document.getElementById('page4').style.display=page==='pomodoro'?'':'none';
-  document.getElementById('taskTabs').style.display=page==='tasks'?'':'none';
-  ['tasks','calendar','pomodoro','settings'].forEach(p=>{document.getElementById('page-tab-'+p).className='tab'+(page===p?' on':'');});
+  document.getElementById('taskTabs').style.display=(page==='tasks'||page==='pomodoro')?'':'none';
   if(page==='calendar'){initCal2();}
   if(page==='pomodoro'){pomPageRenderUI();pomPageLoadTasks();}
   if(page==='settings'){renderSettingsToggles();renderRecurringManager();updateSbStatus();}
