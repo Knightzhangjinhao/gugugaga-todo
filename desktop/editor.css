@@ -1,0 +1,10 @@
+
+.gugu-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:3px;padding:7px 9px;border-top:1px solid #e2d3b1;border-bottom:1px solid #e2d3b1;background:#f9edce}
+.gugu-toolbar select,.gugu-toolbar button{font:12px 'Segoe UI','Microsoft YaHei',sans-serif;color:#51422f;background:transparent;border:1px solid transparent;border-radius:4px;height:27px;cursor:pointer;padding:2px 5px}
+.gugu-toolbar select{background:#fff8e6;border-color:#e2d3b1;max-width:92px}.gugu-toolbar button{min-width:26px;font-weight:600}
+.gugu-toolbar button:hover,.gugu-toolbar button[aria-pressed=true]{background:#e8d5a2;border-color:#d8bf81}
+.gugu-toolbar [data-command=bold]{font-weight:bold}.gugu-toolbar [data-command=italic]{font-style:italic}.gugu-toolbar [data-command=strikeThrough]{text-decoration:line-through}
+.gugu-editor{font:16px/1.8 'Microsoft YaHei','Segoe UI',sans-serif;color:#493b2a;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;outline:none;min-height:120px;padding:13px 17px}
+.gugu-editor:empty:before{content:attr(data-placeholder);color:#a18f6b;pointer-events:none}.gugu-editor ul,.gugu-editor ol{padding-left:25px}.gugu-editor p,.gugu-editor div{margin:0}.gugu-editor:focus-visible{box-shadow:inset 2px 0 #b69556}
+.gugu-memo{border:1px solid var(--border,#e2d3b1);border-radius:4px;overflow:hidden}.gugu-memo .gugu-editor{min-height:190px;max-height:460px;color:var(--ink,#493b2a);background:var(--card,#fff8e6)}
+.save-error{color:#a13724!important}

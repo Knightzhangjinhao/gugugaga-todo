@@ -1,13 +1,13 @@
 {
   "name": "gugugaga-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "咕咕嘎嘎桌面待办与贴边便利贴",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
     "test": "node --test desktop/test/*.test.cjs",
-    "check": "node --check desktop/main.cjs && node --check desktop/preload.cjs && node --check desktop/memo-client.js && node --check desktop/sticky.js",
+    "check": "node desktop/check.cjs",
     "package:win": "node desktop/package.cjs",
     "test:desktop": "electron . --smoke-test"
   },

@@ -1161,7 +1161,7 @@ function updateWeekStats(){
 
 // ════════════════════════ EXPORT/IMPORT ════════════════════════
 function exportData(){
-  const data={tasks:tasks,otTime:pad2(otHour)+':'+pad2(otMin),pomStats:{sessions:pomState.sessions,focusSecs:pomState.focusSecs},pomSettings:{work:pomWorkSecs,break:pomBreakSecs},memo:document.getElementById('memoTextarea').value,weatherCity:weatherCity,theme:JSON.parse(localStorage.getItem(THEME_STORE)||'null'),version:2,exportedAt:new Date().toISOString()};
+  const data={tasks:tasks,otTime:pad2(otHour)+':'+pad2(otMin),pomStats:{sessions:pomState.sessions,focusSecs:pomState.focusSecs},pomSettings:{work:pomWorkSecs,break:pomBreakSecs},memo:document.getElementById('memoTextarea').value,memoHtml:window.guguDesktop?GuguRich.clean(document.getElementById('memoRich').innerHTML):null,weatherCity:weatherCity,theme:JSON.parse(localStorage.getItem(THEME_STORE)||'null'),version:2,exportedAt:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='todo-backup-'+today()+'.json';a.click();
   showToast('✅ 数据已导出');
@@ -1173,7 +1173,7 @@ function importData(event){
       const data=JSON.parse(e.target.result);
       if(data.tasks&&Array.isArray(data.tasks)){tasks=data.tasks;save();render();showToast('✅ 已导入 '+data.tasks.length+' 个任务');}
       if(data.theme)applyTheme(data.theme);
-      if(data.memo)document.getElementById('memoTextarea').value=data.memo;
+      if(typeof data.memo==='string'){document.getElementById('memoTextarea').value=data.memo;const rich=document.getElementById('memoRich');if(window.guguDesktop&&rich){rich.innerHTML=data.memoHtml?GuguRich.clean(data.memoHtml):GuguRich.fromText(data.memo);rich.dispatchEvent(new Event('input',{bubbles:true}));}}
     }catch(err){alert('文件格式错误');}
     event.target.value='';
   };reader.readAsText(file);
@@ -1993,6 +1993,6 @@ try{
   try{document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">🐧</div><div>咕嘎…加载出错了～ 快添加一个任务试试叭</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';}catch(_){}
 }
 </script>
-<script src="desktop/memo-client.js"></script>
+<link rel="stylesheet" href="desktop/editor.css"/><script src="desktop/richtext.js"></script><script src="desktop/memo-client.js"></script>
 </body>
 </html>
