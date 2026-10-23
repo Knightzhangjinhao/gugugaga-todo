@@ -1,0 +1,28 @@
+
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<title>咕咕嘎嘎 · 便利贴</title>
+<link rel="stylesheet" href="sticky.css"><link rel="stylesheet" href="editor.css">
+<script defer src="richtext.js"></script><script defer src="memo-client.js"></script><script defer src="sticky.js"></script>
+</head><body>
+<button id="tab" hidden title="移入或点击展开便利贴" aria-label="展开便利贴">🐧<span>随手记</span></button>
+<main id="note">
+<header id="dragHandle"><span class="brand">🐧 咕咕嘎嘎 <small>随手记</small></span><div class="actions">
+<button id="pin" aria-label="切换置顶" aria-pressed="true" title="取消置顶">📌</button>
+<button id="settings" aria-label="吸附与快捷键设置" title="吸附与快捷键">⚙</button>
+<button id="fold" title="贴边收起" aria-label="贴边收起">⇥</button>
+<button id="hide" title="隐藏，可从托盘或快捷键唤出" aria-label="隐藏便利贴">×</button>
+</div></header>
+<p class="hint" id="hint">拖动顶部靠近屏幕边缘即可吸附</p>
+<section id="preferences" hidden>
+<label>贴靠位置 <select id="dock"><option value="">自由摆放</option><option value="left">左侧吸附</option><option value="right">右侧吸附</option></select></label>
+<label><input id="autoHide" type="checkbox" checked>贴边后自动收起，鼠标移入展开</label>
+<span id="shortcut">快捷键载入中…</span>
+</section>
+<div id="toolbar"></div>
+<div id="text" class="gugu-editor" role="textbox" aria-label="便利贴内容" aria-multiline="true" data-placeholder="先记在这里，慢慢来。&#10;&#10;支持加粗、斜体、删除线和列表。" spellcheck="false"></div>
+<footer><span id="status" role="status" aria-live="polite">正在读取…</span><button id="main">打开待办 ↗</button></footer>
+<button id="retry" hidden>合并 / 重试保存</button><span id="resizeHandle" title="拖动调整大小"></span>
+<div id="snapPreview" hidden>松开后吸附</div>
+</main></body></html>
