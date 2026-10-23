@@ -993,7 +993,7 @@ console.log('%c📋 每日待办 v2 %c启动中…','font-size:14px;font-weight:
 
 // ════════════════════════ CONSTANTS ════════════════════════
 const STORE='mira_todos_v7',OT_STORE='mira_ot_time',POM_STORE='mira_pom_stats',POM_SETTINGS_STORE='mira_pom_settings',MEMO_STORE='mira_memo',WEATHER_CITY_STORE='mira_weather_city',AMBIENT_VOL_STORE='mira_ambient_vol',THEME_STORE='mira_theme',CUSTOM_SOUNDS_STORE='mira_custom_sounds';
-const DS_KEY='sk-4d090ed61306454eaf2603c0dd7e398b';
+const DS_KEY=''; // Credentials must be supplied through a server-side proxy before enabling AI.
 const WMO_CODES={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌧',71:'🌨',73:'🌨',75:'❄️',77:'🌨',80:'🌦',81:'🌧',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
 const WMO_DESC={0:'晴天',1:'基本晴朗',2:'多云',3:'阴天',45:'雾',48:'雾凇',51:'小毛毛雨',52:'毛毛雨',53:'浓毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',77:'雪粒',80:'小阵雨',81:'中阵雨',82:'大阵雨',95:'雷暴',96:'雷暴伴冰雹',99:'强雷暴伴冰雹'};
 const CIRC=2*Math.PI*50;
@@ -1452,7 +1452,7 @@ function buildSysPrompt(){const td=today();const active=tasks.filter(t=>!t.done)
 \`\`\`
 scope 可选 today / week，priority 可选 high / normal。`;
 return persona+'\n\n---\n用户任务数据：\n'+ctx;}
-async function sendChat(){const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;input.value='';appendMsg('user',msg);const loading=appendMsg('ai','思考中…咕嘎……');loading.classList.add('loading');setPenguinState('thinking');try{const res=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DS_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:buildSysPrompt()},{role:'user',content:msg}],max_tokens:600,temperature:0.7})});const data=await res.json();loading.remove();if(data.error){appendMsg('ai','⚠️ '+data.error.message);return;}const reply=data.choices[0].message.content;setPenguinState('talking');setTimeout(()=>setPenguinState(''),2500);const taskMatch=reply.match(/```tasks\s*([\s\S]*?)```/);const cleanReply=reply.replace(/```tasks[\s\S]*?```/g,'').trim();if(cleanReply)appendMsg('ai',cleanReply);if(taskMatch){try{const arr=JSON.parse(taskMatch[1].trim());arr.forEach(item=>{addTask(item.text,item.scope||'today',item.priority||'normal','');});appendMsg('ai','✅ 已为你添加 '+arr.length+' 个任务');}catch(e){appendMsg('ai','（任务格式解析失败）');}}}catch(e){loading.remove();setPenguinState('');appendMsg('ai','⚠️ 请求失败：'+e.message);}}
+async function sendChat(){if(!DS_KEY){appendMsg('ai','AI 暂未启用：请先配置服务端代理。待办和便利贴可以正常使用。');return;}const input=document.getElementById('chatInput');const msg=input.value.trim();if(!msg)return;input.value='';appendMsg('user',msg);const loading=appendMsg('ai','思考中…咕嘎……');loading.classList.add('loading');setPenguinState('thinking');try{const res=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DS_KEY},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:buildSysPrompt()},{role:'user',content:msg}],max_tokens:600,temperature:0.7})});const data=await res.json();loading.remove();if(data.error){appendMsg('ai','⚠️ '+data.error.message);return;}const reply=data.choices[0].message.content;setPenguinState('talking');setTimeout(()=>setPenguinState(''),2500);const taskMatch=reply.match(/```tasks\s*([\s\S]*?)```/);const cleanReply=reply.replace(/```tasks[\s\S]*?```/g,'').trim();if(cleanReply)appendMsg('ai',cleanReply);if(taskMatch){try{const arr=JSON.parse(taskMatch[1].trim());arr.forEach(item=>{addTask(item.text,item.scope||'today',item.priority||'normal','');});appendMsg('ai','✅ 已为你添加 '+arr.length+' 个任务');}catch(e){appendMsg('ai','（任务格式解析失败）');}}}catch(e){loading.remove();setPenguinState('');appendMsg('ai','⚠️ 请求失败：'+e.message);}}
 
 // ════════════════════════ WALLPAPER UPLOAD ════════════════════════
 function handleWallpaperUpload(event){
@@ -1993,5 +1993,6 @@ try{
   try{document.getElementById('listWrap').innerHTML='<div class="empty"><div class="empty-icon">🐧</div><div>咕嘎…加载出错了～ 快添加一个任务试试叭</div><div class="export-row"><button class="export-btn" onclick="restoreFromBackup()">🔄 从备份恢复</button></div></div>';}catch(_){}
 }
 </script>
+<script src="desktop/memo-client.js"></script>
 </body>
 </html>

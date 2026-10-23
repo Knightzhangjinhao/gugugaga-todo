@@ -1,0 +1,26 @@
+
+name: Desktop note
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - run: npm run test:desktop
+      - run: npm run package:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gugugaga-windows-portable
+          path: dist/gugugaga-win32-x64/
+          retention-days: 14
